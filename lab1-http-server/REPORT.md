@@ -20,14 +20,14 @@ Open in browser:
 ```
 http://localhost:8080/
 ```
-![alt text](iimages/mage3.png)
+![alt text](images/image-3.png)
 
 ## 4. Root HTML Page With Image Reference
 Open:
 ```
 http://localhost:8080/index.html
 ```
-![alt text](images/image4.png)
+![alt text](images/image-4.png)
 
 ## 5. Nested Directory Listing
 Navigate:
