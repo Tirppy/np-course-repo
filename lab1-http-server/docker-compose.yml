@@ -1,0 +1,10 @@
+services:
+  webserver:
+    build: .
+    container_name: lab1_server
+    working_dir: /app
+    command: ["python", "src/server.py", "content"]
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
