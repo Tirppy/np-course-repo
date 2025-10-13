@@ -5,11 +5,6 @@ from urllib.parse import urlsplit
 
 
 def http_client_request(host: str, port: int, filename: str, out_target: str | None = None):
-    """Request a single resource from the server.
-
-    If out_target is provided it can be either a directory (existing or to be created)
-    or a full file path. For HTML responses out_target is ignored (still prints).
-    """
     if not filename.startswith('/'):
         path = '/' + filename
     else:
@@ -124,13 +119,6 @@ def _extract_filename_from_headers(headers: dict, fallback: str) -> str:
 
 
 def _resolve_output_path(out_target: str | None, default_name: str, suggested_name: str) -> str:
-    """Decide final path for saving binary content.
-    Rules:
-      - If out_target is None: use suggested_name (or default_name) in current directory.
-      - If out_target exists and is a directory: put suggested_name inside it.
-      - If out_target ends with path separator or looks like a directory that doesn't exist: create it and place suggested_name inside.
-      - Else treat out_target as a file path (use exactly that).
-    """
     if out_target is None:
         return suggested_name or default_name
     # Determine if user meant directory
@@ -157,9 +145,6 @@ def _resolve_output_path(out_target: str | None, default_name: str, suggested_na
 
 
 def main():
-    # Modes:
-    #   URL mode: python client.py http://host:port/path
-    #   Spec mode: python client.py host port filename [output_path]
     if len(sys.argv) == 2 and ("://" in sys.argv[1]):
         http_client_url(sys.argv[1])
         return

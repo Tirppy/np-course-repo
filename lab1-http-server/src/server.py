@@ -116,21 +116,6 @@ def serve_file(path: str, base_dir: str) -> bytes:
     return build_response(b"<h1>404 Not Found</h1>", status=404)
 
 
-
-def ensure_sample_files(base_dir: str) -> None:
-    """Ensure a minimal PNG exists (implementation detail)."""
-    target = os.path.join(base_dir, "cover.png")
-    if not os.path.exists(target):
-        png_b64 = (
-            b"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO4c/HcAAAAASUVORK5CYII="
-        )
-        try:
-            with open(target, "wb") as f:
-                f.write(base64.b64decode(png_b64))
-        except OSError:
-            pass
-
-
 def run_server(base_dir):
     # Ensure sample assets exist for demonstration (pixel.png)
     try:
