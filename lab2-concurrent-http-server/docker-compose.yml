@@ -1,0 +1,16 @@
+services:
+  webserver2:
+    build: .
+    container_name: lab2_server
+    working_dir: /app
+    command: ["python", "src/server.py", "content"]
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - DELAY_MS=1000
+      - COUNTER_MODE=locked
+      - RATE_LIMIT=5
+      - WINDOW_SEC=1.0
+    volumes:
+      - ./:/app
