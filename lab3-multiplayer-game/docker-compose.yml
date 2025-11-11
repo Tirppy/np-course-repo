@@ -1,0 +1,19 @@
+services:
+  app-test:
+    build: .
+    image: memory-scramble-test:latest
+    command: npm test
+    tty: true
+  app-sim:
+    build: .
+    image: memory-scramble-sim:latest
+    command: npm run simulation
+    tty: true
+  app-server:
+    build: .
+    image: memory-scramble-server:latest
+    # default CMD in image starts the server; here we expose port 3000 for remote play
+    command: npm start 3000 boards/ab.txt
+    ports:
+      - "3000:3000"
+    tty: true

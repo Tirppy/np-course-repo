@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<!-- saved from url=(0045)https://web.mit.edu/6.102/www/sp25/psets/ps4/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<title>Problem Set 4: Memory Scramble</title>
+
+<style>
+/* shared with Memory Scramble UI, which is now a single-page app instead of including memory.css */
+table.memory-board {
+  border-spacing: 2px;
+  border-collapse: separate;
+}
+table.memory-board tr td {
+  width: 2em;
+  height: 2.2em;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  color: rgba(0, 0, 0, 0);
+  padding: 0 !important;
+  border: 1px solid black;
+  border-radius: 4px;
+}
+table.memory-board td:not(:empty) {
+  background: gray;
+}
+table.memory-board td:empty.card-visible {
+  border: 1px solid rgba(0, 0, 0, .2);
+}
+table.memory-board td.card-visible {
+  color: rgba(0, 0, 0, 1);
+  background: white;
+}
+table.memory-board td.card-visible.card-control {
+  background: rgba(255, 255, 0, .25);
+  border-color: rgb(128, 64, 0);
+}
+table.memory-board td.card-waiting {
+  background: rgba(0, 255, 0, .25);
+  border-color: rgb(64, 128, 0);
+  cursor: wait;
+}
+/* ps4 */
+.panel-default.pull-right.pull-margin {
+  font-size: 90%;
+  max-width: 45%;
+}
+.panel-default.pull-right.pull-margin .panel-heading {
+  padding: 6px 8px;
+}
+.panel-default.pull-right.pull-margin .panel-body {
+  padding: 8px;
+}
+pre > span {
+  opacity: .5;
+}
+table.memory-board tr td {
+  cursor: default;
+}
+[data-outline='gameplay_rules'] dl dt {
+  width: 50px;
+}
+[data-outline='gameplay_rules'] dl dd {
+  margin-left: 70px;
+}
+#transcript > tbody > tr > td:nth-child(2),
+#transcript > tbody > tr > td:nth-child(3) {
+  padding: 4px;
+}
+#transcript > tbody > tr > td > p:last-child {
+  margin-bottom: 0;
+}
+#transcript > tbody > tr:first-child > td,
+#transcript table.table > tbody > tr:first-child > td {
+  border-top: none;
+}
+b.user-input { color: #009900; }
+
+@keyframes spin {
+  25% { transform: none; }
+  50% { transform: rotate(180deg); }
+  75% { transform: rotate(180deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  display: inline-block;
+  animation: spin 5s ease infinite;
+  text-align: center;
+}
+</style>
+<script>
+window.onHandoutWillRender = function(converter) {
+  // generate IDs for rule jump links
+  converter.hooks.chain('postConversion', function(text) {
+    return text.replace(/<dt>RULE ([\w-]+)<\/dt>\n<dd>/g, '<dt id="rule-$1">$1</dt><dd>');
+  });
+};
+window.onHandoutDidRender = function() {
+  // add rule jump links (assumes dl items are not jumpable by default)
+  makeJumpLinks({ jumpable: 'dt[id]', exclude: '', nest: {} });
+  // remove extra jump links (assumes dl is jumpable by default, with nesting to dt)
+  $('dl dt a.jump + a.jump').remove();
+  // indent sub-rules identified by an em-dash dt
+  var subs = $('dt:contains("\u2014")');
+  subs.nextAll('dt').each(function() {
+    $(this).attr('style', 'width:95px');
+  });
+  subs.next('dd').nextAll('dd').each(function() {
+    $(this).attr('style', 'margin-left:115px');
+  });
+};
+window.onHandoutReady = function() {
+  var indexOfElement = function indexOfElement(elt) {
+    return Array.prototype.indexOf.call(elt.parentElement.children, elt);
+  };
+  $('#transcript .memory-board td').tooltip({
+    container: 'body',
+    placement: function(tip, elt) {
+      var idx = indexOfElement(elt);
+      if (idx < 1) {
+        return 'left';
+      } else if (idx > 1) {
+        return 'right';
+      } else if (indexOfElement(elt.parentElement) > 1) {
+        return 'bottom';
+      } else {
+        return 'top';
+      }
+    },
+    title: function() {
+      var description = this.dataset.transcript ? ': ' + this.dataset.transcript : '';
+      if (this.textContent == '') {
+        return 'No card' + description;
+      } else if ( ! this.classList.contains('card-visible')) {
+        return 'Face-down "' + this.textContent + '"' + description;
+      } else {
+        return 'Face-up "' + this.textContent + '"' + description;
+      }
+    },
+  });
+};
+</script>
+
+<link href="./Memory Scramble_files/handout-style.css" rel="stylesheet"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="shortcut icon" href="https://web.mit.edu/6.102/www/sp25/general/icons/6102.ico"><link rel="apple-touch-icon" href="https://web.mit.edu/6.102/www/sp25/general/icons/6102.png"></head>
+<body data-new-gr-c-s-check-loaded="14.1261.0" data-gr-ext-installed=""><header class="chip"><a href="http://web.mit.edu/6.102/www/sp25/">6.102</a></header><header><a href="http://web.mit.edu/6.102/www/sp25/">6.102 — Software Construction</a><div>Spring 2025</div></header><div class="margin col-sm-2"></div>
+<nav class="table-of-contents col-sm-2"><ul class="nav"><li class="active"><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_set_4_memory_scramble">Problem Set 4: Memory Scramble</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#get_the_code">Get the code</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#overview">Overview</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_1_game_board">Problem 1: Game board</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_2_connect_to_the_web_server">Problem 2: Connect to the web server</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_3_revise_for_concurrent_players">Problem 3: Revise for concurrent players</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_4_changing_cards">Problem 4: Changing cards</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_5_board_events">Problem 5: Board events</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#before_youre_done">Before you’re done</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#submitting">Submitting</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#grading">Grading</a></li></ul></nav>
+<main class="container-fluid"><h1 class="handout-title col-sm-8 col-sm-offset-2" id="problem_set_4_memory_scramble"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_set_4_memory_scramble"></a>Problem Set 4: Memory Scramble</h1><div data-outline="problem_set_4_memory_scramble">
+
+<div class="markdown col-sm-8 col-sm-offset-2 converted"><div class="handout-due alert alert-danger"><p id="@deadlines_problem_set"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@deadlines_problem_set"></a>The deadlines for this problem set are shown on the <a class="no-markdown alert-link" href="https://web.mit.edu/6.102/www/sp25/calendar-agenda">course calendar</a>.</p></div>
+
+<p id="@purpose_problem_set"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@purpose_problem_set"></a>The purpose of this problem set is to explore programming with concurrent use of a shared mutable data type.</p>
+
+<div class="panel panel-info"><div class="panel-heading"><p id="@design_freedom_restrictions"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@design_freedom_restrictions"></a><strong>Design Freedom and Restrictions</strong></p></div>
+<div class="panel-body"><p id="@problem_set_you_substantial_design_freedom"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_set_you_substantial_design_freedom"></a>On this problem set, you have substantial design freedom.</p>
+
+<p id="@pay_attention_ps4"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@pay_attention_ps4"></a>Pay attention to the <strong>PS4 instructions</strong> in the provided code.
+You must satisfy the provided specifications for certain functions in <code>board.ts</code> and <code>commands.ts</code>.
+You may rewrite or delete any of the other provided code, add new classes and methods, etc.
+On this problem set, unlike previous problem sets, we will not be running your tests against any other implementations.</p>
+
+<p id="@take_care_coordinate"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@take_care_coordinate"></a>Take care that the coordinate system of your game board matches the specifications: <em>(row, column)</em> coordinates start at <em>(0, 0)</em> in the top left corner, increasing vertically downwards and horizontally to the right.</p>
+
+<p id="@your_responsibility_examine"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@your_responsibility_examine"></a>It is your responsibility to examine Didit feedback and make sure your code compiles and runs for grading, but you must do your own testing to ensure correctness.</p></div></div>
+
+<h2 id="get_the_code"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#get_the_code"></a>Get the code</h2><div data-outline="get_the_code">
+
+<p id="@get_started"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@get_started"></a>To get started,</p>
+
+<ol>
+<li><p id="@ask_didit_create"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@ask_didit_create"></a>Ask Didit to <a href="https://didit.mit.edu/6.102/sp25/psets/ps4">create a remote <code>psets/ps4</code> repository</a> for you on github.mit.edu.</p></li>
+<li><p id="@clone_repo_find"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@clone_repo_find"></a>Clone the repo.
+Find the <code>git clone</code> command at the top of your Didit assignment page, copy it entirely, paste it into your terminal, and run it.</p></li>
+<li><p id="@run_npm_install"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@run_npm_install"></a>Run <code>npm install</code>, then open in Visual Studio Code.
+See <a href="https://web.mit.edu/6.102/www/sp25/psets/ps0/#clone">Problem Set 0</a> for if you need a refresher on how to create, clone, or set up your repository.</p></li>
+</ol>
+
+</div><h2 id="overview"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#overview"></a>Overview</h2><div data-outline="overview">
+
+<p id="@problem_set_you_build_networked_multiplayer"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_set_you_build_networked_multiplayer"></a>On this problem set, you will build a networked multiplayer version of <a href="https://en.wikipedia.org/wiki/Concentration_%28card_game%29"><strong>Memory</strong>, a.k.a. Concentration</a>, the game in which you turn over face-down cards and try to find matching pairs.
+Our version will have players turning over cards simultaneously, rather than taking turns.
+We’ll call it Memory Scramble.</p>
+
+<p id="@problem_1_you"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_1_you"></a><strong>Problem 1:</strong> you will design and implement one or more ADTs for this game.</p>
+
+<p id="@problem_2_you"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_2_you"></a><strong>Problem 2:</strong> you will connect your ADTs to a game server that handles clients using HTTP.</p>
+
+<p id="@you-re_done_problems"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you-re_done_problems"></a>When you’re done with problems 1-2, you can <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#memory-scramble-ui">play Memory Scramble in your browser</a>.</p>
+
+<p id="@problem_3_you"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_3_you"></a><strong>Problem 3:</strong> you will revise your system to handle multiple simultaneous players using an asynchronous game board.</p>
+
+<p id="@problem_4_you"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_4_you"></a><strong>Problem 4:</strong> you will design and implement a map-like function (as in map/filter/reduce) that replaces cards on the board.</p>
+
+<p id="@problem_5_you"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_5_you"></a><strong>Problem 5:</strong> you will design and implement watching for changes to the board, which makes the Memory Scramble user interface more responsive.</p>
+
+<div id="iterate" class="panel panel-warning"><div class="panel-heading"><p id="@iterative_development_recommendation_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@iterative_development_recommendation_0"></a><strong>Iterative Development Recommendation</strong></p></div>
+<div class="panel-body"><p id="@both_automatic_manual"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@both_automatic_manual"></a>Both <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#grading">automatic and manual grading for the <strong>alpha</strong></a> will focus more on your board and server without concurrency.</p>
+
+<p id="@first_do_problems"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@first_do_problems"></a>First, do problems 1 &amp; 2 <strong>without considering concurrency</strong>: make your <code>Board</code> or other ADTs use synchronous methods, and don’t worry about multiple concurrent players in your server.
+Implement the gameplay rules specified below by writing tests, choosing data structures, and writing code.
+Consider the abstraction functions and rep invariants of all your data types.</p>
+
+<p id="@then_revise_your"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@then_revise_your"></a>Then, revise your work in problem 3 to <strong>make your system ready for concurrent players</strong>.
+Revise your choice of ADT operations based on the need for asynchronous operations.</p>
+
+<p id="@finally_go_problems"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@finally_go_problems"></a>Finally, go on to problems 4 and 5.</p></div></div>
+
+<p id="@game_board_gameplay"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@game_board_gameplay"></a><strong><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#game_board">Game board</a> · <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#gameplay_rules">Gameplay rules</a> · <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#example_game_transcript">Example game transcript</a> · <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#playing_on_the_web">Playing on the web</a></strong></p>
+
+<h3 id="game_board"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#game_board"></a>Game board</h3><div data-outline="game_board">
+
+<p id="@memory_scramble_game"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@memory_scramble_game"></a>The Memory Scramble <strong>game board</strong> has a grid of spaces.
+Each space starts with a card.
+As cards are matched and removed, spaces become empty.</p>
+
+<p id="@card_our_game"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@card_our_game"></a>A <strong>card</strong> in our game is a non-empty string of non-whitespace non-newline characters.
+This allows “pictures” like <code>Hello</code> and pictures like 🌈 by using emoji characters.
+For example:</p>
+
+<table class="no-markdown memory-board" style="margin-bottom: 10px; font-size: 22px;" id="@m_1"><tbody><tr>
+<td class="card-visible"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@m_1"></a>👁</td>
+<td class="card-visible">💖</td>
+<td class="card-visible">M</td>
+<td class="card-visible">√-1</td>
+<td class="card-visible">☕️</td>
+</tr></tbody></table>
+
+<p id="@two_cards_match"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@two_cards_match"></a>Two cards <strong>match</strong> if they have the same string of characters.</p>
+
+<p id="@all_cards_start"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@all_cards_start"></a>All cards start face down.
+Players will turn them face up, and the cards will either turn face down again (if the player turned over cards that don’t match) or be removed from the board (if they do match).</p>
+
+<p id="@game_boards_loaded"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@game_boards_loaded"></a>Game boards are <strong>loaded from a file</strong>.
+Here is the formal grammar for board files:</p>
+
+<pre id="@board_file_row_x"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@board_file_row_x"></a><code class="language-plaintext hljs">BOARD_FILE ::= ROW "x" COLUMN NEWLINE (CARD NEWLINE)+
+
+CARD ::= [^\s\n\r]+
+ROW ::= INT
+COLUMN ::= INT
+INT ::= [0-9]+
+NEWLINE ::= "\r"? "\n"</code></pre>
+
+<p id="@board_file_row_number"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@board_file_row_number"></a>In <code>BOARD_FILE</code>, <code>ROW</code> is the number of rows, <code>COLUMN</code> is the number of columns, and the cards are listed reading across each row, starting with the top row.</p>
+
+<table><tbody><tr><td><p id="@example_board_rainbows_unicorns_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@example_board_rainbows_unicorns_0"></a>For example, this board of <a href="https://emojipedia.org/rainbow/">rainbows</a> and <a href="https://emojipedia.org/unicorn-face/">unicorns</a>: </p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible">🦄</td><td class="card-visible">🦄</td><td class="card-visible">🌈</td></tr><tr><td class="card-visible">🌈</td><td class="card-visible">🌈</td><td class="card-visible">🦄</td></tr><tr><td class="card-visible">🌈</td><td class="card-visible">🦄</td><td class="card-visible">🌈</td></tr></tbody></table></td></tr></tbody></table>
+
+<p id="@would_be_specified"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@would_be_specified"></a>… would be specified in a file as:</p>
+
+<table class="side-by-side"><tbody><tr><td class="no-markdown"><pre id="@3x3_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@3x3_0"></a>3x3<span>↵</span>
+🦄<span>↵</span>
+🦄<span>↵</span>
+🌈<span>↵</span>
+🌈<span>↵</span>
+🌈<span>↵</span>
+🦄<span>↵</span>
+🌈<span>↵</span>
+🦄<span>↵</span>
+🌈<span>↵</span>
+</pre>
+</td><td><p id="@example_used_show_newlines_board_provided"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@example_used_show_newlines_board_provided"></a>In this example, <code>↵</code> is used to show newlines.
+This board is provided in the <code>boards</code> folder of the problem set as <code>perfect.txt</code>.</p>
+
+<p id="@valid_board_file"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@valid_board_file"></a>A valid board file must have exactly <code>ROW</code>×<code>COLUMN</code> newline-terminated <code>CARD</code> lines.</p></td></tr></tbody></table>
+
+</div><h3 id="gameplay_rules"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#gameplay_rules"></a>Gameplay rules</h3><div data-outline="gameplay_rules">
+
+<p id="@multiple_players_manipulate"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@multiple_players_manipulate"></a>Multiple <strong>players</strong> manipulate the cards on the board concurrently.
+They play the game by trying to turn over pairs of identical cards.</p>
+
+<p id="@here-s_informal_summary"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@here-s_informal_summary"></a>Here’s an informal summary of the rules:</p>
+
+<dl id="@1when_player_turns">
+<dt id="rule-1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-1"></a>1</dt><dd>When a player turns over a <em>first card</em> in a pair, they <em>control</em> that card; but if someone else already controls it, the player <em>waits</em> until they can take control.</dd>
+
+<dt id="rule-2"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-2"></a>2</dt><dd>When the player turns over a <em>second card</em>, if the cards match, the player keeps control of them; otherwise, the player gives up control.
+The cards stay face up for now.</dd>
+
+<dt id="rule-3"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-3"></a>3</dt><dd>When the player makes their next move, if their previous cards matched, those cards are removed from the board; otherwise, if no one controls them, they turn face down.</dd>
+</dl>
+
+<p id="@notice_least_two"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@notice_least_two"></a>Notice at least two differences from usual Memory game rules: you can “turn over” a card that is already face up, <em>waiting</em> until that card is available; and turned-over cards stay face up on the board until the player who turned them over makes another move.</p>
+
+<h4 id="@complete_rules"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@complete_rules"></a>Complete rules</h4>
+
+<p id="@first_card_player"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@first_card_player"></a><em>First card:</em> a player tries to turn over a first card by identifying a space on the board…</p>
+
+<dl id="@1-aif_there_no">
+<dt id="rule-1-A"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-1-A"></a>1-A</dt><dd>If there is no card there (the player identified an empty space, perhaps because the card was just removed by another player), the operation fails.</dd>
+
+<dt id="rule-1-B"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-1-B"></a>1-B</dt><dd>If the card is face down, it turns face up (all players can now see it) and the player <strong>controls</strong> that card.</dd>
+
+<dt id="rule-1-C"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-1-C"></a>1-C</dt><dd>If the card is already face up, but not controlled by another player, then it remains face up, and the player <strong>controls</strong> the card.</dd>
+
+<dt id="rule-1-D"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-1-D"></a>1-D</dt><dd>And if the card is face up and controlled by another player, the operation <em>waits</em>.
+The player will contend with other players to take control of the card at the next opportunity.</dd>
+</dl>
+
+<p id="@second_card_once"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@second_card_once"></a><em>Second card:</em> once a player controls their first card, they can try to turn over a second card…</p>
+
+<dl id="@2-aif_there_no">
+<dt id="rule-2-A"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-2-A"></a>2-A</dt><dd>If there is no card there, the operation fails.
+The player also relinquishes control of their <em>first card</em> (but it remains face up for now).</dd>
+
+<dt id="rule-2-B"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-2-B"></a>2-B</dt><dd>If the card is face up and controlled by a player (another player or themselves), the operation fails.
+To avoid deadlocks, the operation does <em>not</em> wait.
+The player also relinquishes control of their <em>first card</em> (but it remains face up for now).</dd>
+
+<dt>—</dt>
+<dd>If the card is face down, or if the card is face up but not controlled by a player, then:</dd>
+
+<dt id="rule-2-C" style="width:95px"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-2-C"></a>2-C</dt><dd style="margin-left:115px">If it is face down, it turns face up.</dd>
+
+<dt id="rule-2-D" style="width:95px"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-2-D"></a>2-D</dt><dd style="margin-left:115px">If the two cards are the same, that’s a successful match!
+The player <em>keeps control</em> of both cards (and they remain face up on the board for now).</dd>
+
+<dt id="rule-2-E" style="width:95px"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-2-E"></a>2-E</dt><dd style="margin-left:115px">If they are not the same, the player relinquishes control of both cards (again, they remain face up for now).</dd>
+</dl>
+
+<p id="@while_one_player"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@while_one_player"></a>While one player is <em>waiting</em> to turn over a first card, other players continue to play normally.
+They do not wait, unless they also try to turn over a first card controlled by another player.</p>
+
+<span id="flip-failure"></span>
+
+<p id="@failure_1-a_2-a"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@failure_1-a_2-a"></a><em>Failure</em> in 1-A, 2-A, and 2-B means that the player fails to control a card (and in 2-A/B, also relinquishes control).
+The player can still continue to play the game.</p>
+
+<p id="@after_trying_turn"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@after_trying_turn"></a>After trying to turn over a <em>second card</em>, successfully or not, the player will try again to turn over a <em>first card</em>.
+When they do that, before following the rules above, they finish their previous play:</p>
+
+<dl id="@3-aif_they_had">
+<dt id="rule-3-A"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-3-A"></a>3-A</dt><dd>If they had turned over a matching pair, they control both cards.
+Now, those cards are removed from the board, and they relinquish control of them.
+Score-keeping is not specified as part of the game.</dd>
+
+<dt id="rule-3-B"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#rule-3-B"></a>3-B</dt><dd>Otherwise, they had turned over one or two non-matching cards, and relinquished control but left them face up on the board.
+Now, for each of those card(s), if the card is still on the board, currently face up, and currently not controlled by another player, the card is turned face down.</dd>
+</dl>
+
+<p id="@if_player_never"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@if_player_never"></a>If the player never tries to turn over a new first card, then the steps of 3-A/B never occur.</p>
+
+</div><h3 id="example_game_transcript"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#example_game_transcript"></a>Example game transcript</h3><div data-outline="example_game_transcript">
+
+<table id="transcript" class="table"><tbody><tr><td><p id="@start_3-3_grid"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@start_3-3_grid"></a>We start with a 3×3 grid of face-down cards and 3 players: Alice, Bob, and Charlie.
+<br><br></p>
+
+<sub style="float:right">Hover or tap on the board to show tooltips. →</sub></td><td><table class="no-markdown memory-board"><tbody><tr><td data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@alice_turns_over_top_left_card"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@alice_turns_over_top_left_card"></a>Alice turns over the top left card. She <em>controls</em> that card for the moment (rule 1-B).</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="controlled by Alice" data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@bob_charlie_also"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@bob_charlie_also"></a>Bob and Charlie also try to turn over that card at the same time.</p>
+
+<p id="@both_now_waiting"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@both_now_waiting"></a>Both are now waiting for the chance to control it (1-D).</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="controlled by Alice, Bob and Charlie are waiting" data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@alice_turns_over_bottom_right_card"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@alice_turns_over_bottom_right_card"></a>Alice turns over the bottom right card (2-C). It doesn’t match.</p>
+
+<p id="@alice_no_longer"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@alice_no_longer"></a>Alice no longer controls any cards, but they stay face up for now (2-E).</p>
+
+<p id="@either_bob_charlie"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@either_bob_charlie"></a>Either Bob or Charlie will now get to control the top left card.</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="Alice relinquishing control, Bob or Charlie will control" data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td class="card-visible" data-transcript="not controlled by anyone" data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@bob_becomes_controller"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@bob_becomes_controller"></a>Bob becomes the controller of that red heart card (1-C).</p>
+
+<p id="@alice_hasn-t_made"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@alice_hasn-t_made"></a>Alice hasn’t made another move, so the purple heart is still face up.</p>
+
+<p id="@charlie_still_waiting"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@charlie_still_waiting"></a>Charlie is still waiting.</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="controlled by Bob, Charlie is waiting" data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td class="card-visible" data-transcript="not controlled by anyone" data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@alice_goes_ahead"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@alice_goes_ahead"></a>Alice goes ahead and turns over a new first card, a yellow heart at the center of the board.</p>
+
+<p id="@red_heart_controlled"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@red_heart_controlled"></a>The red heart is controlled by Bob, so it stays face up (3-B).</p>
+
+<p id="@but_purple_heart"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@but_purple_heart"></a>But the purple heart isn’t controlled, so it turns face down (same 3-B).</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="controlled by Bob, not turned face-down by Alice, Charlie is waiting" data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td class="card-visible" data-transcript="controlled by Alice" data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-transcript="turned face-down by Alice" data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@while_alice_thinking"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@while_alice_thinking"></a>While Alice is thinking about her second card, Bob turns over the top right card.</p>
+
+<p id="@his_first_second"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@his_first_second"></a>His first and second cards are a match!</p>
+
+<p id="@bob_keeps_control"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@bob_keeps_control"></a>Bob keeps control of the cards for now (2-D).
+Charlie is still waiting.</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="controlled by Bob, Charlie is waiting" data-original-title="" title="">❤️</td><td data-original-title="" title="">💛</td><td class="card-visible" data-transcript="controlled by Bob" data-original-title="" title="">❤️</td></tr><tr><td data-original-title="" title="">💚</td><td class="card-visible" data-transcript="controlled by Alice" data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@bob_turns_over"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@bob_turns_over"></a>Bob turns over a new first card, a green heart on the left side.</p>
+
+<p id="@his_matched_red"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@his_matched_red"></a>His matched red hearts are removed from the board, and he relinquishes control of them (3-A).</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-transcript="Charlie will fail to control" data-original-title="" title=""></td><td data-original-title="" title="">💛</td><td class="card-visible" data-original-title="" title=""></td></tr><tr><td class="card-visible" data-transcript="controlled by Bob" data-original-title="" title="">💚</td><td class="card-visible" data-transcript="controlled by Alice" data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td></tr></tbody></table></td></tr>
+<tr><td><p id="@charlie_finally_gets"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@charlie_finally_gets"></a>Charlie finally gets a chance at the top left card — but it’s gone (1-A).</p>
+
+<p id="@charlie_now_ready"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@charlie_now_ready"></a>Charlie is now ready to turn over a new first card.</p>
+
+<p id="@alice_bob_each"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@alice_bob_each"></a>Alice and Bob each control one card and will try to turn over a matching second.</p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible" data-original-title="" title=""></td><td data-original-title="" title="">💛</td><td class="card-visible" data-original-title="" title=""></td></tr><tr><td class="card-visible" data-transcript="controlled by Bob" data-original-title="" title="">💚</td><td class="card-visible" data-transcript="controlled by Alice" data-original-title="" title="">💛</td><td data-original-title="" title="">💚</td></tr><tr><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td><td data-original-title="" title="">💜</td></tr></tbody></table></td></tr></tbody></table>
+
+</div><h3 id="playing_on_the_web"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#playing_on_the_web"></a>Playing on the web</h3><div data-outline="playing_on_the_web">
+
+<p id="@support_multiplayer_memory"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@support_multiplayer_memory"></a>To support multiplayer Memory Scramble games over the network, we define a HTTP protocol so the game can be played in a web browser.
+Code for the web server is already provided (in <code>server.ts</code>), but it relies on these provided function specifications in the code for this problem set, which you will have to implement:</p>
+
+<ul id="@parsefromfile_board-ts_look-flip-map">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@parsefromfile_board-ts_look-flip-map"></a><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/classes/board.Board.html#parseFromFile"><code>parseFromFile()</code> from <code>board.ts</code></a></li>
+<li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/modules/commands.html"><code>look()</code>,<code>flip()</code>,<code>map()</code>, and <code>watch()</code> from <code>commands.ts</code></a></li>
+</ul>
+
+<p id="@protocol_each_player"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@protocol_each_player"></a>In the protocol, each player identifies themselves by an ID, a nonempty string of alphanumeric or underscore characters of their choice.
+All requests with the same player ID are the actions of a single player.</p>
+
+<p id="@all_requests_server"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@all_requests_server"></a>For all requests, the server responds with a <em>board state</em>, showing the current state of the board from the player’s perspective.  A board state is described by the following grammar:</p>
+
+<pre id="@board_state_row_x"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@board_state_row_x"></a><code class="language-plaintext hljs">BOARD_STATE ::= ROW "x" COLUMN NEWLINE (SPOT NEWLINE)+
+
+SPOT ::= "none" | "down" | "up " CARD | "my " CARD
+CARD ::= [^\s\n\r]+
+ROW ::= INT
+COLUMN ::= INT
+INT ::= [0-9]+
+NEWLINE ::= "\r"? "\n"</code></pre>
+
+<p id="@board_state_row"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@board_state_row"></a>In the board state, <code>ROW</code> is the number of rows, <code>COLUMN</code> is the number of columns, and the cards are listed reading across each row, starting with the top row.</p>
+
+<p id="@none_indicates_no"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@none_indicates_no"></a><code>none</code> indicates no card in that location, <code>down</code> is a face-down card, <code>up</code> is a face-up card controlled by another player (or by no one), and <code>my</code> is a face-up card controlled by the player who sent the request.</p>
+
+<p id="@example_3"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@example_3"></a>For example:</p>
+
+<table class="side-by-side"><tbody><tr><td class="no-markdown"><pre id="@3x3_up-a_down"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@3x3_up-a_down"></a>3x3<span>↵</span>
+up<span>␣</span>A<span>↵</span>
+down<span>↵</span>
+down<span>↵</span>
+none<span>↵</span>
+my<span>␣</span>B<span>↵</span>
+none<span>↵</span>
+down<span>↵</span>
+down<span>↵</span>
+up<span>␣</span>C<span>↵</span>
+</pre>
+</td><td><table class="no-markdown memory-board pull-right" id="@aaabccc"><tbody><tr><td class="card-visible"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@aaabccc"></a>A</td><td>A</td><td>A</td></tr><tr><td class="card-visible"></td><td class="card-visible card-control">B</td><td class="card-visible"></td></tr><tr><td>C</td><td>C</td><td class="card-visible">C</td></tr></tbody></table>
+
+<p id="@example_used_show_blank_spaces_show"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@example_used_show_blank_spaces_show"></a>In this example <code>␣</code> is used to show blank spaces and <code>↵</code> to show newlines.</p>
+
+<p id="@there_no_cards"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@there_no_cards"></a>There are no cards at (1,0) or (1,2).</p>
+
+<p id="@cards_0-0_1-1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@cards_0-0_1-1"></a>The cards at (0,0), (1,1) and (2,2) are face up, and the player receiving this message controls the <code>B</code> card at (1,1).</p></td></tr></tbody></table>
+
+<hr>
+
+</div></div><h2 id="problem_1_game_board"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_1_game_board"></a>Problem 1: Game board</h2><div data-outline="problem_1_game_board">
+
+<p id="@specify_test_implement_mutable_board_adt"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@specify_test_implement_mutable_board_adt"></a><strong>Specify, test, and implement</strong> a <strong>mutable</strong> <code>Board</code> ADT to represent the Memory Scramble game board.
+It may be useful to define other ADTs as well.</p>
+
+<p id="@remember_include_specification"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@remember_include_specification"></a>Remember to include: a specification for every class and every method you write; abstraction functions, rep invariants, and safety from rep exposure arguments; <code>checkRep()</code> and <code>toString()</code>.</p>
+
+<p id="@board_defines_static"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@board_defines_static"></a><code>Board</code> defines a static factory method for creating new boards that you must support:</p>
+
+<ul id="@parsefromfile-filename_creates_board">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@parsefromfile-filename_creates_board"></a><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/classes/board.Board.html#parseFromFile"><code>parseFromFile(filename)</code></a>: creates a board by parsing a file in <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#game_board">the format described above</a></li>
+</ul>
+
+<p id="@parsing_board_files"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@parsing_board_files"></a>For <strong>parsing</strong> board files, a parser generator (like ParserLib) is more complexity than you need.</p>
+
+<ul>
+<li><p id="@string-split_string-match_probably"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@string-split_string-match_probably"></a><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/split"><code>String.split()</code></a> and <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match"><code>String.match()</code></a> probably can handle all the parsing and extracting.</p></li>
+<li><p id="@fs-promises-readfile_reads_file"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@fs-promises-readfile_reads_file"></a><a href="https://nodejs.org/api/fs.html#fs_fspromises_readfile_path_options"><code>fs.promises.readFile()</code></a> reads a file asynchronously.  Be sure to use the promise-based version of this function (called <code>fsPromises.readFile</code> in the documentation, and referenced as <code>fs.promises.readFile</code> if you import <code>fs</code>), rather than the older callback-function-based version (also called <code>readFile</code> but found in <code>fs</code> itself).</p></li>
+</ul>
+
+<p id="@keep_track_players"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@keep_track_players"></a>To keep track of <strong>players</strong> and their state:</p>
+
+<ul>
+<li><p id="@each_player_might_simply_be_identified"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@each_player_might_simply_be_identified"></a>Each player might simply be identified by their ID used in the <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/modules/commands.html">command functions</a>.
+All of the game state would be stored in the <code>Board</code>.</p></li>
+<li><p id="@each_player_might_be_represented_using"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@each_player_might_be_represented_using"></a>Each player might be represented using an ADT, <em>e.g.</em> <code>Player</code>.
+Some of the player’s state might be stored in the <code>Player</code> object, or the <code>Board</code> might store all the state.</p></li>
+</ul>
+
+<p id="@you_need_track"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you_need_track"></a>You will need to track <strong>who controls which cards</strong> and the <strong>status of each card</strong> according to the gameplay rules.</p>
+
+<div class="handout-solo alert alert-warning"><p id="@iterative_development_recommendation_implement_synchronous_board"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@iterative_development_recommendation_implement_synchronous_board"></a><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#iterate" class="alert-link">Iterative development recommendation</a>: implement a synchronous board first (<em>i.e.</em> with no <code>async</code> methods other than <code>parseFromFile</code>), and connect it to a server in Problem 2.
+The <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#grading" class="alert-link">alpha grading</a> will focus more on playing the game without concurrency.
+Then revise for correct behavior with concurrent players in Problem 3.</p></div>
+
+<p id="@implement_waiting_according"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@implement_waiting_according"></a>To implement <strong>waiting</strong> according to the gameplay rules, use asynchronous methods and <code>await</code>, or <a href="https://web.mit.edu/6.102/www/sp25/classes/17-callbacks-guis/#callbacks">callback functions</a>.
+The board should <strong>not</strong> <a href="https://web.mit.edu/6.102/www/sp25/classes/15-promises/#never_busy-wait">busy-wait</a>.</p>
+
+<p id="@you_decide_which"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you_decide_which"></a>You decide <strong>which actions are <a href="https://web.mit.edu/6.102/www/sp25/classes/16-mutual-exclusion/#%5Eatomic">atomic</a></strong>, since the rules do not specify.
+In rule <strong>3-B</strong>, for example, turning the two cards back over might be a single action — where no other player can see or manipulate the intermediate board — or two separate actions.
+But the board must never reach an inconsistent state, such as two players controlling the same card, or having a face-down card that a player still controls.</p>
+
+<p id="@note_flip_operation"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@note_flip_operation"></a>Note that a flip operation can <em>fail</em> at <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#flip-failure">several places in the rules</a>.
+In the spec of the <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/functions/commands.flip.html"><code>flip()</code> command</a> (which you will need to implement to connect your <code>Board</code> to the provided web server), failure is indicated by a rejected promise, which can be done by <a href="https://web.mit.edu/6.102/www/sp25/classes/15-promises/#throw-to-reject">throwing an exception from an <code>async</code> function</a>.
+Keep this in mind when you are designing your own <code>Board</code> operations.
+For testing for a rejected promise, <a href="https://nodejs.org/api/assert.html#assertrejectsasyncfn-error-message"><code>assert.rejects</code></a> is useful.</p>
+
+<h4 id="@simulating_game"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@simulating_game"></a>Simulating a game</h4>
+
+<p id="@simulation-ts_provided_skeleton"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@simulation-ts_provided_skeleton"></a>In <code>simulation.ts</code> we have provided skeleton code for a program that simulates one player interacting with a board, randomly flipping over several cards.</p>
+
+<p id="@you_should_be"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you_should_be"></a>You should be able to fill in the blanks in <code>simulationMain()</code> function and use <code>npm run simulation</code> to run simulated single-player Memory Scramble games.</p>
+
+</div><h2 id="problem_2_connect_to_the_web_server"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_2_connect_to_the_web_server"></a>Problem 2: Connect to the web server</h2><div data-outline="problem_2_connect_to_the_web_server">
+
+<p id="@order_connect_your"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@order_connect_your"></a>In order to connect your <code>Board</code> type to the provided web server, and also to the Didit autograder, you need to implement the functions in <code>commands.ts</code> so that they use operations of <code>Board</code>.  Start with these two functions, which are sufficient to play the game:</p>
+
+<ul id="@look_commands-ts_flip">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@look_commands-ts_flip"></a><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/functions/commands.look.html"><code>look()</code> from <code>commands.ts</code></a></li>
+<li><a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/functions/commands.flip.html"><code>flip()</code> from <code>commands.ts</code></a></li>
+</ul>
+
+<p id="@point_your_look"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@point_your_look"></a>At this point, your <code>look()</code> and <code>flip()</code> may not yet implement correct waiting behavior according to the rules or be able to handle concurrent players, but they should be able to handle <strong>multiple clients that make moves in sequence</strong>.</p>
+
+<div id="glue_code"><p id="@general_keep_all"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@general_keep_all"></a>In general, keep all the functions in <code>commands.ts</code> extremely simple.
+They should be no more than <em>glue code</em>, calling at most a couple of your <code>Board</code> operations, without any additional logic.
+Specifically:</p>
+
+<ul id="@body_each_function">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@body_each_function"></a>The body of each function should be at most 3 lines long, consisting of at most a couple simple function calls, possibly using local variables, plus a <code>return</code> statement.</li>
+<li>All of the functions that they call should be already well-tested, either by your <code>Board</code> test suite or by TypeScript itself.</li>
+</ul>
+
+<p id="@if_that-s_case"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@if_that-s_case"></a>If that’s the case, you don’t need to write a separate test suite for <code>commands.ts</code>.
+Your existing tests for <code>Board</code> should suffice.</p>
+
+<p id="@if_any_function"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@if_any_function"></a>If any function in <code>commands.ts</code> is more complex than that — for example, with control statements like <code>if</code> or <code>while</code>, or string-processing operations — then you will need to create <code>test/commands.test.ts</code> and design a test suite for it.
+Before you do that, <strong>stop!</strong>
+First discuss your design with course staff, because this is a sign that the operations you chose for your <code>Board</code> type are not powerful enough.</p></div>
+
+<ul id="@spec_specs_look">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@spec_specs_look"></a><strong>Spec</strong>.
+The specs for <code>look()</code> and <code>flip()</code> are given, but you may strengthen them if you want.</li>
+<li><strong>Test</strong>.
+Keep these operations extremely simple so you don’t have to test them separately.</li>
+<li><strong>Code</strong>.
+Implement <code>look()</code> and <code>flip()</code> as simply as possible.</li>
+</ul>
+
+<h4 id="@running_web_server"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@running_web_server"></a>Running the web server</h4>
+
+<p id="@start_server_use"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@start_server_use"></a>To start the server, use <code>npm start</code>, which runs <code>main()</code> in <code>server.ts</code>.
+This code parses command-line arguments, calls the <code>Board</code> parsing function based on those arguments, and creates and starts a server.
+You should not need to change <code>server.ts</code>.</p>
+
+<p id="@run_main_first"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@run_main_first"></a>To run <code>main()</code>, first open a terminal, either inside Visual Studio Code or in a separate terminal window.
+Then start a web server on port 8080 with our 3×3 board of rainbows and unicorns:</p>
+
+<pre class="no-markdown" style="white-space: nowrap;" id="@npm_start_8080"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@npm_start_8080"></a>npm start 8080 boards/perfect.txt
+</pre>
+
+<p id="@remember_server_keeps"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@remember_server_keeps"></a>Remember that the server keeps running until you terminate its process, and if you try to run a second server on the same port, it will fail with “address already in use”.
+If you run the server on the command line, use <code>Ctrl</code>-<code>C</code> in that terminal to stop it.</p>
+
+<div class="clearfix"></div>
+
+<span id="memory-scramble-ui"></span>
+
+<p id="@once_your_server"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@once_your_server"></a>Once your server is complete, you can play the game in your web browser!</p>
+
+<p id="@your_web_browser"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@your_web_browser"></a>In your web browser, go to the URL that the server displays when it starts, and it will return a web page that speaks the game protocol with your server.</p>
+
+<p id="@you_can_open"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you_can_open"></a>You can open the URL in multiple tabs to pretend to be different players.  Each time you open the page, it randomly generates a new player ID to use with your server.</p>
+
+<p id="@you_can_also"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you_can_also"></a>You can also connect to a friend’s server by IP address, but you may not be able to do it directly as a URL in your browser (because your browser may require connecting by HTTPS, which this server does not support). Instead, find the web page as a file in your own ps4 code (its name is <code>public/index.html</code>), open that HTML file in your web browser, and <a href="https://web.mit.edu/6.102/www/sp25/classes/18-message-passing-networking/#@you_can_ask">specify the other server by IP address</a>.</p>
+
+</div><h2 id="problem_3_revise_for_concurrent_players"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_3_revise_for_concurrent_players"></a>Problem 3: Revise for concurrent players</h2><div data-outline="problem_3_revise_for_concurrent_players">
+
+<p id="@revise_board_make"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@revise_board_make"></a>Revise <code>Board</code> to make it asynchronous, updating other ADTs as needed.</p>
+
+<p id="@consider_using_await"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@consider_using_await"></a>Consider using <code>await</code> on a promise returned by the board to implement <strong>waiting for a card</strong> according to the rules.
+Refer to <a href="https://web.mit.edu/6.102/www/sp25/classes/16-mutual-exclusion/#making_and_keeping_a_promise">“making and keeping a promise” in <em>Mutual Exclusion</em></a> for discussion of:</p>
+
+<ul id="@promise-withresolvers_factory_function">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@promise-withresolvers_factory_function"></a>the <code>Promise.withResolvers()</code> factory function, which is most useful for transforming callbacks into promises</li>
+<li>the specification and <a href="https://web.mit.edu/6.102/www/sp25/classes/16-mutual-exclusion/code.html#deferredts">implementation of <code>Deferred</code></a>, which is most useful for storing promises to be resolved later</li>
+</ul>
+
+<p id="@simulation-ts_increase_value"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@simulation-ts_increase_value"></a>In <code>simulation.ts</code>, increase the value of <code>players</code> to simulate multi-player Memory Scramble games.
+By instrumenting your code, for example with <code>console.log()</code> statements or by keeping track of cards that different players flip over, you should observe correct <em>control</em> of cards, correct <em>waiting</em> when players try to flip over a first card, and correct <em>removal</em> of matching cards when players make a next move.</p>
+
+<p id="@notice_your_simulation"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@notice_your_simulation"></a>Notice that your simulation should not terminate if one player turns over matching cards in their last move (leaving two cards face up under that player’s control) and another player tries to flip one of them as their first card.</p>
+
+<p id="@consider_revising_your"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@consider_revising_your"></a>Consider revising your testing strategy to test different interleavings of concurrent player actions.
+You may find the <a href="https://web.mit.edu/6.102/www/sp25/classes/16-mutual-exclusion/#timeout-function"><code>timeout()</code> function</a> useful for forcing short waits.
+Very short timeouts (1 or even 0 milliseconds) give up control long enough for concurrent actions to run to completion.
+Avoid waiting for hundreds of milliseconds, because this may cause your tests to timeout on Didit.
+<strong>Do not put <code>timeout()</code> calls in your implementation code</strong>; this is a sign that your design has a <a href="https://web.mit.edu/6.102/www/sp25/classes/16-mutual-exclusion/#race_conditions">race condition</a>.</p>
+
+<p id="@review_your_commands-ts"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@review_your_commands-ts"></a>Review your <code>commands.ts</code> file to make sure it is using the asynchronous <code>Board</code> properly, according to the rules.
+Your commands should not busy-wait or hang.
+While one request is waiting (e.g. for a card to flip), other requests must be handled normally.</p>
+
+</div><h2 id="problem_4_changing_cards"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_4_changing_cards"></a>Problem 4: Changing cards</h2><div data-outline="problem_4_changing_cards">
+
+<p id="@problem_adds_one_more_command_protocol_map"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_adds_one_more_command_protocol_map"></a>This problem adds one more command to the protocol, <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/functions/commands.map.html"><code>map()</code></a>.</p>
+
+<p id="@map_command_applies"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@map_command_applies"></a>The <code>map()</code> command applies a transformer function <code>f</code> to every card on the board, consistently replacing it with <code>f(card)</code>.</p>
+
+<table><tbody><tr><td><p id="@example_board_rainbows_unicorns_two_cards"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@example_board_rainbows_unicorns_two_cards"></a>For example, this board of <a href="https://emojipedia.org/rainbow/">rainbows</a> and <a href="https://emojipedia.org/unicorn-face/">unicorns</a> (with two cards already matched and removed): </p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible">🦄</td><td class="card-visible">🦄</td><td class="card-visible">🌈</td></tr><tr><td class="card-visible">🌈</td><td class="card-visible">🌈</td><td class="card-visible"></td></tr><tr><td class="card-visible">🌈</td><td class="card-visible"></td><td class="card-visible">🌈</td></tr></tbody></table></td></tr>
+<tr><td><br></td></tr>
+<tr><td><p id="@might_be_converted"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@might_be_converted"></a>…might be converted by <code>map()</code> into this board of <a href="https://emojipedia.org/sun-with-face/">sunshine</a> and <a href="https://emojipedia.org/lollipop/">lollipops</a>: </p></td><td><table class="no-markdown memory-board"><tbody><tr><td class="card-visible">🌞</td><td class="card-visible">🌞</td><td class="card-visible">🍭</td></tr><tr><td class="card-visible">🍭</td><td class="card-visible">🍭</td><td class="card-visible"></td></tr><tr><td class="card-visible">🍭</td><td class="card-visible"></td><td class="card-visible">🍭</td></tr></tbody></table></td></tr></tbody></table>
+
+<p id="@map_command_independent"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@map_command_independent"></a>The <code>map()</code> command is independent of other state of the game.
+So it doesn’t matter whether a card is face up or face down, or whether it is controlled by another player, it can still be replaced, and its face-up/face-down and control state is unaffected by the replacement.</p>
+
+<p id="@transformer_function_f"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@transformer_function_f"></a>The transformer function <code>f</code> is asynchronous (returning a promise), so it might be implemented in a variety of ways (e.g. doing a database lookup, accessing a language translation web API, even asking a human user what the replacement card should be).
+This means that <code>map()</code> may have to wait for its calls to <code>f</code> to complete.
+But <code>map()</code> must not prevent other commands on the board from interleaving with it while it is running (including other commands issued by the same player, and including other <code>map()</code> commands).
+Depending on how you implement <code>map()</code>, other operations may see partially-transformed boards (with some cards replaced but not others), but the board must remain consistent to players in the sense that if two cards on the board match each other at the start of a <code>map()</code>, then while that <code>map()</code> is in progress, it must not cause any player to observe a board state in which that pair of cards do not match.</p>
+
+<p id="@function_f_must"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@function_f_must"></a>The function <code>f</code> must be a mathematical function as described in the <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/functions/commands.map.html"><code>map()</code> spec</a>, but it need not be a <a href="https://en.wikipedia.org/wiki/Injective_function">one-to-one function</a>.</p>
+
+<p id="@specify_test_implement_support_your_board_adt_enable_you_implement_map_function"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@specify_test_implement_support_your_board_adt_enable_you_implement_map_function"></a><strong>Specify, test, and implement</strong> support in your board ADT that will enable you to implement the <code>map()</code> function in <code>commands.ts</code> as simple <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#glue_code">glue code that requires no testing of its own</a>.</p>
+
+<p id="@map_command_not"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@map_command_not"></a>The <code>map()</code> command is not used by the Memory Scramble web server or web client, but it can be invoked by Didit autograding.</p>
+
+</div><h2 id="problem_5_board_events"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#problem_5_board_events"></a>Problem 5: Board events</h2><div data-outline="problem_5_board_events">
+
+<p id="@problem_adds_one_more_command_protocol_watch"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_adds_one_more_command_protocol_watch"></a>This problem adds one more command to the protocol, <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/doc/functions/commands.watch.html"><code>watch()</code></a>.</p>
+
+<p id="@command_does_not"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@command_does_not"></a>This command does not immediately return.
+Instead, it <em>waits</em> until the next time the board changes.
+At that point, it responds with the current state of the board.</p>
+
+<p id="@change_defined_any"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@change_defined_any"></a>A <strong>change</strong> is defined as any cards turning face up or face down, being removed from the board, or changing from one string to a different string.</p>
+
+<p id="@watch_call_must"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@watch_call_must"></a>A <code>watch()</code> call must wait until such a change occurs.
+When there is no change in the state of the cards — for example, if a player tries to turn over an empty space, or if a player takes control or relinquishes control of a card but it does not turn face up or down — pending watch requests must continue to wait.</p>
+
+<p id="@while_watch-board_player"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@while_watch-board_player"></a>While a <code class="no-markdown">watch(<i>board</i>, <i>player</i>)</code> request is waiting, the player may use other commands on the same board, and they will be processed normally.
+For example, a concurrent <code class="no-markdown">look(<i>board</i>, <i>player</i>)</code> request must not wait.</p>
+
+<p id="@specify_test_implement_support_your_board_adt_enable_you_implement_watching_board"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@specify_test_implement_support_your_board_adt_enable_you_implement_watching_board"></a><strong>Specify, test, and implement</strong> support in your board ADT that will enable you to implement watching the board for changes.
+Your board ADT might implement notification of only a single change, or notification of all future changes:</p>
+
+<ul id="@if_client_receives">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@if_client_receives"></a>If the client receives only a single change, it might be an asynchronous method whose promise fulfills when the board changes.</li>
+<li>Listeners might provide a <a href="https://web.mit.edu/6.102/www/sp25/classes/17-callbacks-guis/#callbacks">callback function</a> to <code>Board</code>.
+The board will call them back on each change.</li>
+</ul>
+
+<p id="@first_try_using"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@first_try_using"></a>First try using your board’s change notifications in <code>simulation.ts</code> to watch the board concurrently during a simulated game.</p>
+
+<p id="@then_use_your"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@then_use_your"></a>Then use your change notifications to <strong>specify, test, and implement</strong> the <code>watch()</code> function in <code>commands.ts</code> as simple <a href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#glue_code">glue code that requires no testing of its own</a>.</p>
+
+<p id="@note_you_decide"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@note_you_decide"></a>Note that you decide <strong>which changes are <a href="https://web.mit.edu/6.102/www/sp25/classes/16-mutual-exclusion/#%5Eatomic">atomic</a></strong>.
+For example, the <code>watch()</code> specification does not say whether, when a pair of matched (or mismatched) cards is removed (or turned face down), that is reported as a single change or two separate changes.</p>
+
+<p id="@once_you_added"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@once_you_added"></a>Once you have added <code>watch()</code> to your server, you can flip the switch in the Memory Scramble web user interface from “update by polling” to “update by watching”, and you should find that the UI is quicker to display board updates made by other clients.</p>
+
+<hr>
+
+</div><h2 id="before_youre_done"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#before_youre_done"></a>Before you’re done</h2><div data-outline="before_youre_done">
+
+<ul>
+<li><p id="@make_sure_you_documented_specifications_form"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@make_sure_you_documented_specifications_form"></a>Make sure you have <strong>documented specifications</strong>, in the form of properly-formatted TypeDoc comments, for all your types and operations.</p></li>
+<li><p id="@make_sure_you_documented_abstraction_functions"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@make_sure_you_documented_abstraction_functions"></a>Make sure you have <strong>documented abstraction functions and representation invariants</strong>, in the form of a comment near the field declarations, for all your ADTs.</p>
+
+<p id="@addition_document_type"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@addition_document_type"></a>In addition, <strong>document how the type prevents rep exposure</strong>.
+See <a href="https://web.mit.edu/6.102/www/sp25/classes/07-abstraction-functions-rep-invariants/#documenting_the_af_ri_and_safety_from_rep_exposure"><em>Documenting the AF, RI, &amp; SRE</em></a>.</p></li>
+<li><p id="@you_implement_waiting"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@you_implement_waiting"></a>When you implement waiting behavior, make sure you are using a promise, not busy-waiting.</p></li>
+<li><p id="@make_sure_you_specify_test_implement"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@make_sure_you_specify_test_implement"></a>Make sure you specify, test, and implement <code>equalValue()</code> for all immutable types.</p></li>
+<li><p id="@make_sure_implement"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@make_sure_implement"></a>Make sure to implement <code>toString()</code>.  (And if you want to be sure you implemented it right, then <em>strengthen its spec</em> and <em>test</em> it as well.)</p>
+
+<p id="@also_use_inheritdoc"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@also_use_inheritdoc"></a>Also use <a href="https://jsdoc.app/tags-inheritdoc.html"><code>@inheritdoc</code></a> when a class implements an interface method, to remind readers where they can find the spec.</p></li>
+<li><p id="@make_sure_you_thorough_principled_test"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@make_sure_you_thorough_principled_test"></a>Make sure you have a thorough, principled <strong>test suite</strong> for every type.</p></li>
+</ul>
+
+<p id="@last_problem_set"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@last_problem_set"></a>This is the last problem set in 6.102: your work should exemplify <strong>SFB</strong>, <strong>ETU</strong>, <strong>RFC</strong> software construction!</p>
+
+<hr>
+
+</div><h2 id="submitting"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#submitting"></a>Submitting</h2><div data-outline="submitting">
+
+<p id="@make_sure_you_commit_push_your"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@make_sure_you_commit_push_your"></a><strong>Make sure you commit AND push your work</strong> by 10:00pm on the deadline date.</p>
+
+<p id="@problem_set_can"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@problem_set_can"></a><span class="spin">⏳</span> This problem set can take much longer for Didit to process than previous psets, so push early.</p>
+
+<p id="@remember_didit_feedback"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@remember_didit_feedback"></a>Remember that Didit feedback is provided on a best-effort basis:</p>
+
+<ul id="@there_no_guarantee">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@there_no_guarantee"></a>There is no guarantee that Didit tests will run within any particular timeframe, or at all.
+If you push code close to the deadline, the large number of submissions will slow the turnaround time before your code is examined.</li>
+<li>If you commit and push right before the deadline, it’s okay if the Didit build finishes after the deadline, because the commit-and-push was on time.</li>
+<li>Passing the public test on Didit is no guarantee that you will pass the full battery of autograding tests, but failing it is sure to mean many lost points on the problem set.</li>
+</ul>
+
+</div><h2 id="grading"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#grading"></a>Grading</h2><div data-outline="grading">
+
+<p id="@your_overall_ps4"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@your_overall_ps4"></a>Your overall ps4 grade will be computed as approximately: <br>
+~40% alpha autograde (including online exercises) + ~10% alpha manual grade + ~35% beta autograde + ~15% beta manual grade</p>
+
+<p id="@autograder_test_cases"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@autograder_test_cases"></a>The autograder test cases will not change from the alpha to the beta, but their point values will.
+In order to encourage <a href="https://web.mit.edu/6.102/www/sp25/classes/13-debugging/#incremental_development">incremental development</a>, alpha autograding will focus primarily on situations where clients make moves in series (separated by time), not concurrently.
+On the beta, autograding will look at a full range of concurrent situations.</p>
+
+<p id="@manual_grading_alpha"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/psets/ps4/#@manual_grading_alpha"></a>Manual grading of the alpha will only examine internal documentation (AF, RI, testing strategy, etc.) and implementation that does not relate to concurrency.
+Manual grading of the beta may examine any part, including re-examining those docs or code, and how you addressed code review feedback.</p></div></div>
+
+</div></main>
+<script type="text/javascript" charset="utf-8" src="./Memory Scramble_files/jquery.min.js.download"></script>
+
+
+<script type="text/javascript" charset="utf-8" src="./Memory Scramble_files/bootstrap.min.js.download"></script><footer>MIT EECS</footer><footer class="footer-archived"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block; vertical-align: text-bottom;"><path fill-rule="evenodd" d="M1.75 2.5a.25.25 0 00-.25.25v1.5c0 .138.112.25.25.25h12.5a.25.25 0 00.25-.25v-1.5a.25.25 0 00-.25-.25H1.75zM0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v1.5A1.75 1.75 0 0114.25 6H1.75A1.75 1.75 0 010 4.25v-1.5zM1.75 7a.75.75 0 01.75.75v5.5c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25v-5.5a.75.75 0 111.5 0v5.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25v-5.5A.75.75 0 011.75 7zm4.5 1a.75.75 0 000 1.5h3.5a.75.75 0 100-1.5h-3.5z"></path></svg>  spring 2025 course site archive  |  latest&nbsp;site&nbsp;at&nbsp;<a href="http://web.mit.edu/6.102/">mit.edu/6.102</a>  |  <a href="http://accessibility.mit.edu/">accessibility</a></footer><script type="text/javascript" charset="utf-8" src="./Memory Scramble_files/handout-run.js.download" data-handx-url="https://handx.mit.edu/v1/6.102/sp25/" data-handx-id="psets-ps4"></script></body><!--
+Handout delivered Fri May 23 2025 13:35:07 GMT+0000 (Coordinated Universal Time)
+--><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+      div.grammarly-desktop-integration {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select:none;
+        user-select:none;
+      }
+
+      div.grammarly-desktop-integration:before {
+        content: attr(data-content);
+      }
+    </style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration></html>

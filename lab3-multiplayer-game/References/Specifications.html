@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<!-- saved from url=(0061)https://web.mit.edu/6.102/www/sp25/classes/04-specifications/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+
+<title>Reading 4: Specifications</title>
+
+<link href="./Specifications_files/handout-style.css" rel="stylesheet"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="shortcut icon" href="https://web.mit.edu/6.102/www/sp25/general/icons/6102.ico"><link rel="apple-touch-icon" href="https://web.mit.edu/6.102/www/sp25/general/icons/6102.png"></head>
+<body data-new-gr-c-s-check-loaded="14.1261.0" data-gr-ext-installed=""><header class="chip"><a href="http://web.mit.edu/6.102/www/sp25/">6.102</a></header><header><a href="http://web.mit.edu/6.102/www/sp25/">6.102 — Software Construction</a><div>Spring 2025</div></header><div class="margin col-sm-2"></div>
+<nav class="table-of-contents col-sm-2"><ul class="nav"><li class="active"><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#reading_4_specifications">Reading 4: Specifications</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#introduction">Introduction</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#behavioral_equivalence">Behavioral equivalence</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#why_specifications">Why specifications?</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specification_structure">Specification structure</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specifications_in_typescript">Specifications in TypeScript</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#what_a_spec_may_talk_about">What a spec may talk about</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#avoid_null">Avoid null</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#include_emptiness">Include emptiness</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#testing_and_specifications">Testing and specifications</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specifications_for_mutating_functions">Specifications for mutating functions</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#exceptions">Exceptions</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#special_results">Special results</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#modules">Modules</a></li><li><a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#summary">Summary</a></li></ul></nav>
+<main class="container-fluid"><h1 class="handout-title col-sm-8 col-sm-offset-2" id="reading_4_specifications"><iframe class="exercises-status" src="./Specifications_files/status.html"></iframe><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#reading_4_specifications"></a>Reading 4: Specifications</h1><div data-outline="reading_4_specifications">
+
+
+<style>
+table.side-by-side td {
+  vertical-align: top;
+}
+table.side-by-side pre {
+  padding: 4px;
+}
+table.side-by-side td:first-child {
+  border-right: 1px solid #333;
+  padding-right: 1em;
+}
+table.side-by-side td:last-child {
+  padding-left: 1em;
+}
+</style>
+
+<div class="markdown col-sm-8 col-sm-offset-2 converted"><h4 id="@praxis_tutor_exercises"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@praxis_tutor_exercises"></a>Praxis Tutor exercises</h4>
+
+<p id="@keep_making_progress"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@keep_making_progress"></a>Keep making progress on TypeScript by completing the following categories in the Praxis Tutor:</p>
+
+<div class="tutorProgress no-markdown">
+    <img class="ideWindow" src="./Specifications_files/small-vscode-window.png">
+    <div class="callout">
+
+        <div class="level">
+            <div class="conceptGroup completed">
+                <button class="conceptGroupButton" disabled="">
+                    <span class="checkMark">✓</span>
+                    <span class="conceptGroupUiLabel">Comments &amp; Assertions</span>
+                    <span class="numberSetsLeft">1/1</span>
+                </button>
+                <div class="conceptBoxes">
+                    <div class="conceptBox"></div>
+                    <div class="conceptBox"></div>
+                </div>
+            </div>
+            <div class="conceptGroup completed">
+                <button class="conceptGroupButton" disabled="">
+                    <span class="checkMark">✓</span>
+                    <span class="conceptGroupUiLabel">Exceptions</span>
+                    <span class="numberSetsLeft">1/1</span>
+                </button>
+                <div class="conceptBoxes">
+                    <div class="conceptBox"></div>
+                    <div class="conceptBox"></div>
+                    <div class="conceptBox"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<h4 id="@software_6-102"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@software_6-102"></a>Software in 6.102</h4>
+
+<table class="table table-striped no-markdown" id="@safe_bugseasy_understandready">
+<tbody><tr><th width="33%"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@safe_bugseasy_understandready"></a>Safe from bugs</th><th>Easy to understand</th><th>Ready for change</th></tr>
+<tr><td>
+  Correct today and correct in the unknown future.
+</td><td>
+  Communicating clearly with future programmers, including future you.
+</td><td>
+  Designed to accommodate change without rewriting.
+</td></tr>
+</tbody></table>
+
+<h4 id="@objectives"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@objectives"></a>Objectives</h4>
+
+<ul id="@understand_preconditions_postconditions">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@understand_preconditions_postconditions"></a>Understand preconditions and postconditions in function specifications, and be able to write correct specifications</li>
+<li>Be able to write tests against a specification</li>
+<li>Understand how to use exceptions</li>
+</ul>
+
+<h2 id="introduction"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#introduction"></a>Introduction</h2><div data-outline="introduction">
+
+<p id="@specifications_linchpin_teamwork"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specifications_linchpin_teamwork"></a>Specifications are the linchpin of teamwork.
+It’s impossible to delegate responsibility for implementing a function without a specification.
+The specification acts as a contract: the implementer is responsible for meeting the contract, and a client that uses the function can rely on the contract.
+In fact, we’ll see that like real legal contracts, specifications place demands on both parties: when the specification has a precondition, the client has responsibilities too.</p>
+
+<p id="@reading_look_role"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_look_role"></a>In this reading we’ll look at the role played by specifications of functions.
+We’ll discuss what preconditions and postconditions are, and what they mean for the implementer and the client of a function.
+We’ll also talk about how to use exceptions, an important language feature found not only in TypeScript, but also Python, Java, and many other modern languages, which allows us to make a function’s interface safer from bugs and easier to understand.</p>
+
+</div><h2 id="behavioral_equivalence"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#behavioral_equivalence"></a>Behavioral equivalence</h2><div data-outline="behavioral_equivalence">
+
+<p id="@suppose_you_working"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@suppose_you_working"></a>Suppose you are working on a program containing this function, which finds the index of an integer in an array:</p>
+
+<pre id="@function_find-arr_array-number_val_number_number_let_i_0_i_arr-length_i_if_arr-i_val_return_i_return_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_find-arr_array-number_val_number_number_let_i_0_i_arr-length_i_if_arr-i_val_return_i_return_1"></a><code class="language-ts hljs typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">find</span>(<span class="hljs-params">arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; arr.length; i++) {
+        <span class="hljs-keyword">if</span> (arr[i] === val) <span class="hljs-keyword">return</span> i;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;
+}</code></pre>
+
+<p id="@find_function_many"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find_function_many"></a>This <code>find</code> function has many <em>clients</em> in the program (places where the function is called).
+You’ve just realized that frequently in this program, when <code>find</code> is called with a large array, the value it finds is likely to be either close to the start of the array (which is very fast to find), or close to the end (which is very slow, because it requires checking almost the entire array).
+So you have the clever idea to speed things up by searching from both ends of the array at the same time:</p>
+
+<pre id="@function_find-arr_array-number_val_number_number_let_i_0_j_arr-length-1_i_j_i_j_if_arr-i_val_return_i_if_arr-j_val_return_j_return_1_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_find-arr_array-number_val_number_number_let_i_0_j_arr-length-1_i_j_i_j_if_arr-i_val_return_i_if_arr-j_val_return_j_return_1_0"></a><code class="language-ts hljs typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">find</span>(<span class="hljs-params">arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>, j = arr.length<span class="hljs-number">-1</span>; i &lt;= j; i++, j--) {
+        <span class="hljs-keyword">if</span> (arr[i] === val) <span class="hljs-keyword">return</span> i;
+        <span class="hljs-keyword">if</span> (arr[j] === val) <span class="hljs-keyword">return</span> j;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;
+}</code></pre>
+
+<p id="@safe_replace_find"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@safe_replace_find"></a>Is it safe to replace <code>find</code> with this new implementation?
+Can we make this change without introducing bugs?
+To determine <mark data-structure-text="behavioral equivalence" id="^behavioral_equivalence"><em>behavioral equivalence</em></mark>, we ask whether we could substitute one implementation for the other without affecting correctness.</p>
+
+<p id="@not_only_do"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@not_only_do"></a>Not only do these implementations have different performance characteristics, they actually have different output behavior for certain inputs.
+If <code>val</code> happens to appear <em>more than once</em> in the array, the original <code>find</code> always returns the lowest index at which it occurs.
+But the new <code>find</code> might return the lowest index or the highest index, whichever it finds first.</p>
+
+<p id="@val_occurs_exactly"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@val_occurs_exactly"></a>When <code>val</code> occurs at exactly one index of the array, however, the two implementations behave the same: they both return that index.
+It may be that the clients never rely on the behavior outside of that case.
+Whenever they call the function, they will be passing in an array with exactly one element matching <code>val</code>.
+For such clients, these two versions of <code>find</code> are the same, and we could switch from one implementation to the other without issue.</p>
+
+<p id="@notion_behavioral_equivalence"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@notion_behavioral_equivalence"></a>The notion of behavioral equivalence is in the eye of the beholder — that is, the client.
+In order to make it possible to substitute one implementation for another, and to know when this is acceptable, we need a specification that states exactly what the client depends on.</p>
+
+<p id="@case_specification_would"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@case_specification_would"></a>In this case, a specification that would allow these two implementations to be behaviorally equivalent might be:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@find-arr_array-number_val_number_number_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find-arr_array-number_val_number_number_0"></a><code class="language-ts hljs typescript">find(arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span>): <span class="hljs-built_in">number</span></code></pre>
+
+<dl id="@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_0">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_0"></a>requires:</dt>
+<dd><code>val</code> occurs exactly once in <code>arr</code></dd>
+
+<dt>effects:</dt>
+<dd>returns index <code>i</code> such that <code>arr[i]</code> = <code>val</code></dd>
+</dl></div>
+
+<p id="@see_more_detail"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@see_more_detail"></a>As we will see in more detail later, the <em>requires</em> clause specifies conditions that must be true for a legal call to <code>find</code>, and the <em>effects</em> clause specifies how the implementation will behave when the client has made a legal call.</p>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-behavioral_equivalence"><h4 class="text-danger" id="@reading_exercises_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_0"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-behavioral_equivalence-somethings_missing" data-target="#ex-behavioral_equivalence-somethings_missing" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-behavioral_equivalence-somethings_missing"></a><span class="panel-title">Something’s missing</span></div><div class="panel-collapse collapse exercise-panel" id="ex-behavioral_equivalence-somethings_missing" data-outline="somethings_missing" data-ex-id="behavioral_equivalence/somethings_missing" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@there-s_strange_difference"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@there-s_strange_difference"></a>There’s a strange difference between the implementations and specification of <code>find</code> above.
+Both implementations end with <code>return -1</code>, but the spec never mentions <code>-1</code> at all!
+Why?</p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="the spec is still incomplete, and we will need to finish it"><label for="md_converted_choice_1_0"><input type="checkbox" id="md_converted_choice_1_0">the spec is still incomplete, and we will need to finish it</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="the return -1 statements are never reached when find is called legally"><label for="md_converted_choice_1_1"><input type="checkbox" id="md_converted_choice_1_1">the <code>return -1</code> statements are never reached when <code>find</code> is called legally</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="the phrase “returns index i…” in the spec covers this case: just make i === -1"><label for="md_converted_choice_1_2"><input type="checkbox" id="md_converted_choice_1_2">the phrase “returns index <code>i</code>…” in the spec covers this case: just make <code>i === -1</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="the spec only needs to describe its behavior when it is called legally"><label for="md_converted_choice_1_3"><input type="checkbox" id="md_converted_choice_1_3">the spec only needs to describe its behavior when it is called legally</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-behavioral_equivalence-order_matters" data-target="#ex-behavioral_equivalence-order_matters" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-behavioral_equivalence-order_matters"></a><span class="panel-title">Order matters</span></div><div class="panel-collapse collapse exercise-panel" id="ex-behavioral_equivalence-order_matters" data-outline="order_matters" data-ex-id="behavioral_equivalence/order_matters" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@find_spec_just"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find_spec_just"></a>The <code>find</code> spec we just showed will let you make this implementation change safely – but only if that spec existed at the right time!
+Which ordering of the steps below is safest from bugs?</p>
+
+<p id="@c_other_people"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@c_other_people"></a>C: other people write clients using <code>find</code> <br>
+I1: you write the original forward-search <code>find</code> implementation <br>
+I2: you write the new forward-and-back <code>find</code> implementation <br>
+S: you write the spec for <code>find</code> shown above <br>
+T: you write a test suite for <code>find</code></p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="C, I1, I2, S, T"><label for="md_converted_choice_2_0"><input type="radio" id="md_converted_choice_2_0" name="md_converted_radio_2">C, I1, I2, S, T</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="I1, C, S, I2"><label for="md_converted_choice_2_1"><input type="radio" id="md_converted_choice_2_1" name="md_converted_radio_2">I1, C, S, I2</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="I1, C, I2"><label for="md_converted_choice_2_2"><input type="radio" id="md_converted_choice_2_2" name="md_converted_radio_2">I1, C, I2</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="S, T, I1, C, I2"><label for="md_converted_choice_2_3"><input type="radio" id="md_converted_choice_2_3" name="md_converted_radio_2">S, T, I1, C, I2</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="I1, T, C, I2, S"><label for="md_converted_choice_2_4"><input type="radio" id="md_converted_choice_2_4" name="md_converted_radio_2">I1, T, C, I2, S</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-behavioral_equivalence-behave_nicely" data-target="#ex-behavioral_equivalence-behave_nicely" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-behavioral_equivalence-behave_nicely"></a><span class="panel-title">Behave nicely</span></div><div class="panel-collapse collapse exercise-panel" id="ex-behavioral_equivalence-behave_nicely" data-outline="behave_nicely" data-ex-id="behavioral_equivalence/behave_nicely" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@consider_these_two"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@consider_these_two"></a>Consider these two implementations of <code>find</code>, which differ not only in the direction they search through the array, but also in what they return if the search fails:</p>
+
+<pre id="@function_find-arr_array-number_val_number_number_let_i_0_i_arr-length_i_if_arr-i_val_return_i_return_arr-length"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_find-arr_array-number_val_number_number_let_i_0_i_arr-length_i_if_arr-i_val_return_i_return_arr-length"></a><code class="language-ts hljs typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">find</span>(<span class="hljs-params">arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; arr.length; i++) {
+        <span class="hljs-keyword">if</span> (arr[i] === val) <span class="hljs-keyword">return</span> i;
+    }
+    <span class="hljs-keyword">return</span> arr.length;
+}</code></pre>
+
+<pre id="@function_find-arr_array-number_val_number_number_let_i_arr-length"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_find-arr_array-number_val_number_number_let_i_arr-length"></a><code class="language-ts hljs typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">find</span>(<span class="hljs-params">arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = arr.length - <span class="hljs-number">1</span>; i &gt;= <span class="hljs-number">0</span>; i--) {
+        <span class="hljs-keyword">if</span> (arr[i] === val) <span class="hljs-keyword">return</span> i;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;
+}</code></pre>
+
+<p id="@said_above_suppose"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@said_above_suppose"></a>As we said above, suppose clients only care about calling the find function when they know <code>val</code> occurs exactly once in <code>arr</code>.</p>
+
+<label class="exercise-part-heading" id="@case_these_two"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@case_these_two"></a>In this case, are these two <code>find</code> implementations behaviorally equivalent?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="Yes"><label for="md_converted_choice_3_0"><input type="radio" id="md_converted_choice_3_0" name="md_converted_radio_3">Yes</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="No"><label for="md_converted_choice_3_1"><input type="radio" id="md_converted_choice_3_1" name="md_converted_radio_3">No</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-behavioral_equivalence-best_behavior" data-target="#ex-behavioral_equivalence-best_behavior" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-behavioral_equivalence-best_behavior"></a><span class="panel-title">Best behavior</span></div><div class="panel-collapse collapse exercise-panel" id="ex-behavioral_equivalence-best_behavior" data-outline="best_behavior" data-ex-id="behavioral_equivalence/best_behavior" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@now_change_spec"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@now_change_spec"></a>Now let’s change the spec.</p>
+
+<p id="@suppose_clients_now"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@suppose_clients_now"></a>Suppose clients now care that the <code>find</code> function should:</p>
+
+<ul id="@if_val_arr">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_val_arr"></a>(if <code>val</code> is in <code>arr</code>) return some index <code>i</code> such that <code>arr[i] === val</code></li>
+<li>(otherwise) return some integer <code>j</code> such that <code>j</code> is not a valid array index.</li>
+</ul>
+
+<label class="exercise-part-heading" id="@case_two_find"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@case_two_find"></a>In this case, are the two <code>find</code> implementations from the previous exercise behaviorally equivalent?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="Yes"><label for="md_converted_choice_4_0"><input type="radio" id="md_converted_choice_4_0" name="md_converted_radio_4">Yes</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="No"><label for="md_converted_choice_4_1"><input type="radio" id="md_converted_choice_4_1" name="md_converted_radio_4">No</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+</div><h2 id="why_specifications"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#why_specifications"></a>Why specifications?</h2><div data-outline="why_specifications">
+
+<p id="@our_find_example"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@our_find_example"></a>Our <code>find</code> example showed how a specification can help make a program both ready for change and safe from bugs.
+Many of the nastiest bugs in programs arise because of misunderstandings about behavior at the interface between two pieces of code.
+Although every programmer has specifications in mind, not all programmers write them down.
+As a result, different programmers on a team may have <em>different</em> specifications in mind.
+When the program fails, it’s hard to determine where the error is.
+Precise specifications in the code let you apportion blame (to code fragments, not people!), and can spare you the agony of puzzling over where a bug fix should go.</p>
+
+<p id="@specifications_good_client"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specifications_good_client"></a>Specifications are good for the client of a module because they help make the module easier to understand, like a label on the outside of a black box.
+Having a specification lets you understand what the module does without having to read the module’s code.
+If you’re not convinced that reading a spec is easier than reading code, compare our spec for <code>find</code> on the left, with its tricky implementation on the right:</p>
+
+<table class="side-by-side pull-margin"><tbody><tr><td><div class="handout-spec panel panel-default"><pre id="@find-arr_array-number_val_number_number_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find-arr_array-number_val_number_number_1"></a><code class="language-ts hljs typescript">find(arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span>): <span class="hljs-built_in">number</span></code></pre>
+
+<dl id="@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_1">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_1"></a>requires:</dt>
+<dd><code>val</code> occurs exactly once in <code>arr</code></dd>
+
+<dt>effects:</dt>
+<dd>returns index <code>i</code> such that <code>arr[i]</code> = <code>val</code></dd>
+</dl></div></td>
+<td><pre id="@function_find-arr_array-number_val_number_number_let_i_0_j_arr-length-1_i_j_i_j_if_arr-i_val_return_i_if_arr-j_val_return_j_return_1_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_find-arr_array-number_val_number_number_let_i_0_j_arr-length-1_i_j_i_j_if_arr-i_val_return_i_if_arr-j_val_return_j_return_1_1"></a><code class="language-ts hljs typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">find</span>(<span class="hljs-params">arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>, j = arr.length<span class="hljs-number">-1</span>; i &lt;= j; i++, j--) {
+        <span class="hljs-keyword">if</span> (arr[i] === val) <span class="hljs-keyword">return</span> i;
+        <span class="hljs-keyword">if</span> (arr[j] === val) <span class="hljs-keyword">return</span> j;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">-1</span>;
+}</code></pre></td></tr></tbody></table>
+
+<div class="panel panel-default panel-figure pull-right pull-margin"><div class="panel-body text-center"><img src="./Specifications_files/firewall.svg" class="pull-right" width="400"></div></div>
+
+<p id="@specifications_good_implementer"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specifications_good_implementer"></a>Specifications are good for the implementer of a function because they give the implementer freedom to change the implementation without telling clients.
+Specifications can make code faster, too.
+We’ll see that a specification can rule out certain states in which a function might be called.
+Restricting the inputs might allow the implementer to skip an expensive check that is no longer necessary and use a more efficient implementation.
+We will see an example of this later in this reading.</p>
+
+<p id="@contract_acts_firewall"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@contract_acts_firewall"></a>The contract acts as a <em>firewall</em> between client and implementer.
+It shields the client from the details of the <em>workings</em> of the module: as a client, you don’t need to read the source code of the module if you have its specification.
+And it shields the implementer from the details of the <em>usage</em> of the module: as an implementer, you don’t have to ask every client how they plan to use the module.
+This firewall results in <mark data-structure-text="decoupling" id="^decoupling"><em>decoupling</em></mark>, allowing the code of the module and the code of a client to be changed independently, so long as the changes respect the specification — each obeying its obligation under the contract.</p>
+
+</div><h2 id="specification_structure"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specification_structure"></a>Specification structure</h2><div data-outline="specification_structure">
+
+<p id="@abstractly_speaking_specification"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@abstractly_speaking_specification"></a>Abstractly speaking, a <mark data-structure-text="specification" id="^specification"><em>specification</em></mark> of a function has several parts:</p>
+
+<ul id="@function_signature_giving">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_signature_giving"></a>a function signature, giving the name, parameter types, and return type</li>
+<li>a <em>requires</em> clause, describing additional restrictions on the parameters</li>
+<li>an <em>effects</em> clause, describing the return value, exceptions, and other effects of the function</li>
+</ul>
+
+<div class="clearfix"></div>
+
+<div class="panel panel-default panel-figure pull-right pull-margin"><div class="panel-body text-center"><img src="./Specifications_files/firewall-implies.svg" class="pull-right" width="400"></div></div>
+
+<div class="panel panel-default panel-figure pull-right pull-margin"><div class="panel-body text-center"><img src="./Specifications_files/firewall-unsat.svg" class="pull-right" width="400"></div></div>
+
+<p id="@taken_together_these"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@taken_together_these"></a>Taken together, these parts form the <mark data-structure-text="precondition" id="^precondition"><em>precondition</em></mark> and the <mark data-structure-text="postcondition" id="^postcondition"><em>postcondition</em></mark> of the function.</p>
+
+<p id="@precondition_obligation_client"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@precondition_obligation_client"></a>The precondition is an obligation on the client (the caller of the function).
+It is a condition on the state in which the function is invoked.
+One aspect of the precondition is the number and types of the parameters in the function signature, which TypeScript can <a href="https://web.mit.edu/6.102/www/sp25/classes/01-static-checking/#static_checking_dynamic_checking_no_checking">statically check</a>.
+Additional conditions are written down in the <em>requires</em> clause, for example:</p>
+
+<ul id="@narrowing_parameter_type">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@narrowing_parameter_type"></a>narrowing a parameter type (e.g. <code>x is an integer &gt;= 0</code> to say that a <code>number</code> parameter <code>x</code> must actually be a nonnegative integer)</li>
+<li>interactions between parameters (e.g., <code>val</code> occurs exactly once in <code>arr</code>)</li>
+</ul>
+
+<p id="@postcondition_obligation_implementer"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@postcondition_obligation_implementer"></a>The postcondition is an obligation on the implementer of the function.
+TypeScript can statically check some parts of the postcondition, notably the return type.
+Additional conditions are written down in the <em>effects</em> clause, including:</p>
+
+<ul id="@return_value_relates">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@return_value_relates"></a>how the return value relates to the inputs</li>
+<li>which exceptions are thrown, and when</li>
+<li>whether and how objects are mutated</li>
+</ul>
+
+<p id="@general_postcondition_condition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@general_postcondition_condition"></a>In general, the postcondition is a condition on the state of the program <em>after</em> the function is invoked, assuming the precondition was true <em>before</em>.</p>
+
+<p id="@overall_structure_logical"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@overall_structure_logical"></a>The overall structure is a logical implication: <em>if</em> the precondition holds when the function is called, <em>then</em> the postcondition must hold when the function completes.</p>
+
+<p id="@if_precondition_does"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_precondition_does"></a>If the precondition does <em>not</em> hold when the function is called, the implementation is <em>not</em> bound by the postcondition.
+It is free to do anything, including never returning, throwing an exception not mentioned in the spec, returning arbitrary results, making arbitrary mutations, etc.</p>
+
+<div class="clearfix"></div>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-specification_structure"><h4 class="text-danger" id="@reading_exercises_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_1"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-specification_structure-logical_implication" data-target="#ex-specification_structure-logical_implication" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-specification_structure-logical_implication"></a><span class="panel-title">Logical implication</span></div><div class="panel-collapse collapse exercise-panel" id="ex-specification_structure-logical_implication" data-outline="logical_implication" data-ex-id="specification_structure/logical_implication" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@here-s_spec_we-ve"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@here-s_spec_we-ve"></a>Here’s the spec we’ve been looking at:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@find-arr_array-number_val_number_number_2"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find-arr_array-number_val_number_number_2"></a><code class="language-ts hljs typescript">find(arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span>): <span class="hljs-built_in">number</span></code></pre>
+
+<dl id="@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_2">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_2"></a>requires:</dt>
+<dd><code>val</code> occurs exactly once in <code>arr</code></dd>
+
+<dt>effects:</dt>
+<dd>returns index <code>i</code> such that <code>arr[i]</code> = <code>val</code></dd>
+</dl></div>
+
+<label class="exercise-part-heading" id="@implementer_find_which"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@implementer_find_which"></a>As the implementer of <code>find</code>, which are legal?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="if arr is empty, return 0"><label for="md_converted_choice_5_0"><input type="checkbox" id="md_converted_choice_5_0">if <code>arr</code> is empty, return 0</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="if arr is empty, throw an exception"><label for="md_converted_choice_5_1"><input type="checkbox" id="md_converted_choice_5_1">if <code>arr</code> is empty, throw an exception</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="if val occurs twice in arr, throw an exception"><label for="md_converted_choice_5_2"><input type="checkbox" id="md_converted_choice_5_2">if <code>val</code> occurs twice in <code>arr</code>, throw an exception</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="if val occurs twice in arr, set all the values in arr to zero, then throw an exception"><label for="md_converted_choice_5_3"><input type="checkbox" id="md_converted_choice_5_3">if <code>val</code> occurs twice in <code>arr</code>, set all the values in <code>arr</code> to zero, then throw an exception</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="if arr is not empty but val doesn’t occur, pick an index at random, set it to val, and return that index"><label for="md_converted_choice_5_4"><input type="checkbox" id="md_converted_choice_5_4">if <code>arr</code> is not empty but <code>val</code> doesn’t occur, pick an index at random, set it to <code>val</code>, and return that index</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="if arr[0] is val, continue checking the rest of the array and return the highest index where you find val (or 0 if you don’t find it again)"><label for="md_converted_choice_5_5"><input type="checkbox" id="md_converted_choice_5_5">if <code>arr[0]</code> is <code>val</code>, continue checking the rest of the array and return the highest index where you find <code>val</code> (or 0 if you don’t find it again)</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-specification_structure-logical_implementation" data-target="#ex-specification_structure-logical_implementation" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-specification_structure-logical_implementation"></a><span class="panel-title">Logical implementation</span></div><div class="panel-collapse collapse exercise-panel" id="ex-specification_structure-logical_implementation" data-outline="logical_implementation" data-ex-id="specification_structure/logical_implementation" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<label class="exercise-part-heading" id="@implementer_find_why"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@implementer_find_why"></a>As the implementer of <code>find</code>, why would you choose to throw an exception if <code>arr</code> is empty?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="DRY"><label for="md_converted_choice_6_0"><input type="radio" id="md_converted_choice_6_0" name="md_converted_radio_6">DRY</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="fail fast"><label for="md_converted_choice_6_1"><input type="radio" id="md_converted_choice_6_1" name="md_converted_radio_6">fail fast</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="one purpose per variable"><label for="md_converted_choice_6_2"><input type="radio" id="md_converted_choice_6_2" name="md_converted_radio_6">one purpose per variable</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="avoid global variables"><label for="md_converted_choice_6_3"><input type="radio" id="md_converted_choice_6_3" name="md_converted_radio_6">avoid global variables</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="return results"><label for="md_converted_choice_6_4"><input type="radio" id="md_converted_choice_6_4" name="md_converted_radio_6">return results</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+</div><h2 id="specifications_in_typescript"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specifications_in_typescript"></a>Specifications in TypeScript</h2><div data-outline="specifications_in_typescript">
+
+<p id="@some_languages_notably"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@some_languages_notably"></a>Some languages (notably <a href="http://en.wikipedia.org/wiki/Eiffel_(programming_language)">Eiffel</a>) incorporate preconditions and postconditions as a fundamental part of the language, as expressions that the runtime system (or even the compiler) can automatically check to enforce the contracts between clients and implementers.</p>
+
+<p id="@typescript_does_not_go_quite_so"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@typescript_does_not_go_quite_so"></a>TypeScript does not go quite so far, but its static type declarations <em>are</em> effectively part of the precondition and postcondition of a function, a part that is automatically checked and enforced by the compiler.
+The rest of the contract — the parts that we can’t write as types — must be described in a comment preceding the function, and generally depends on human beings to check it and guarantee it.</p>
+
+<p id="@common_convention_originally"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@common_convention_originally"></a>A common convention, originally designed for Java but now also used by TypeScript and JavaScript, is to put a <a href="https://typedoc.org/guides/doccomments/">documentation comment</a> before the function, in which:</p>
+
+<ul id="@parameters_described_param">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@parameters_described_param"></a>parameters are described by <a href="https://typedoc.org/tags/param/"><code>@param</code> clauses</a></li>
+<li>results are described by the <a href="https://typedoc.org/tags/returns/"><code>@returns</code> clause</a></li>
+</ul>
+
+<p id="@preconditions_generally_go"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@preconditions_generally_go"></a>Preconditions generally go into <code>@param</code> where possible, and postconditions into <code>@returns</code>.
+So a specification like this:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@find-arr_array-number_val_number_number_3"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find-arr_array-number_val_number_number_3"></a><code class="language-ts hljs typescript">find(arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span>): <span class="hljs-built_in">number</span></code></pre>
+
+<dl id="@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_3">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_val_occurs_exactly_once_arr_effects_returns_index_i_such_arr-i_val_3"></a>requires:</dt>
+<dd><code>val</code> occurs exactly once in <code>arr</code></dd>
+
+<dt>effects:</dt>
+<dd>returns index <code>i</code> such that <code>arr[i]</code> = <code>val</code></dd>
+</dl></div>
+
+<p id="@might_be_rendered"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@might_be_rendered"></a>… might be rendered in TypeDoc like this:</p>
+
+<pre id="@find_value_array"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find_value_array"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * Find a value in an array.
+ * @param arr array to search, requires that val occurs exactly once
+ *            in arr
+ * @param val value to search for
+ * @returns index i such that arr[i] = val
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">find</span>(<span class="hljs-params">arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span></span></code></pre>
+
+<p id="@documenting_your_specifications"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@documenting_your_specifications"></a>Documenting your specifications using this TypeDoc format allows Visual Studio Code to show you (and clients of your code) useful information, and allows you to <a href="https://typedoc.org/">generate HTML documentation</a> automatically.</p>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-specifications_in_typescript"><h4 class="text-danger" id="@reading_exercises_2"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_2"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-specifications_in_typescript-typedoc" data-target="#ex-specifications_in_typescript-typedoc" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-specifications_in_typescript-typedoc"></a><span class="panel-title">TypeDoc</span></div><div class="panel-collapse collapse exercise-panel" id="ex-specifications_in_typescript-typedoc" data-outline="typedoc" data-ex-id="specifications_in_typescript/typedoc" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@given_spec"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@given_spec"></a>Given this spec:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@ispalindrome-word_string_boolean"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ispalindrome-word_string_boolean"></a><code class="language-ts hljs typescript">isPalindrome(word: <span class="hljs-built_in">string</span>): <span class="hljs-built_in">boolean</span></code></pre>
+
+<dl id="@requires_word_contains">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_word_contains"></a>requires:</dt>
+<dd><code>word</code> contains only alphanumeric characters</dd>
+
+<dt>effects:</dt>
+<dd>returns true if and only if <code>word</code> is a palindrome</dd>
+</dl></div>
+
+<p id="@here_flawed_attempt"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@here_flawed_attempt"></a>Here is a flawed attempt to write the spec in TypeDoc:</p>
+
+<pre id="@check_if_word"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@check_if_word"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/*
+ * Check if a word is a palindrome.
+ * A palindrome is a sequence of characters
+ * that reads the same forwards and backwards.
+ * @param string word
+ * @requires word contains only alphanumeric characters
+ * @effects returns true if and only if word is a palindrome
+ * @returns boolean
+ */</span></code></pre>
+
+<label class="exercise-part-heading" id="@which_lines_typedoc"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_lines_typedoc"></a>Which lines in the TypeDoc comment are problematic?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="/*"><label for="md_converted_choice_7_0"><input type="checkbox" id="md_converted_choice_7_0"><code>/*</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" * Check if a word is a palindrome."><label for="md_converted_choice_7_1"><input type="checkbox" id="md_converted_choice_7_1"><code>&nbsp;* Check if a word is a palindrome.</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" * A palindrome is a sequence of characters * that reads the same forwards and backwards."><label for="md_converted_choice_7_2"><input type="checkbox" id="md_converted_choice_7_2"><code>&nbsp;* A palindrome is a sequence of characters</code><br><code>&nbsp;* that reads the same forwards and backwards.</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" * @param string word"><label for="md_converted_choice_7_3"><input type="checkbox" id="md_converted_choice_7_3"><code>&nbsp;* @param string word</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" * @requires word contains only alphanumeric characters"><label for="md_converted_choice_7_4"><input type="checkbox" id="md_converted_choice_7_4"><code>&nbsp;* @requires word contains only alphanumeric characters</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" * @effects returns true if and only if word is a palindrome"><label for="md_converted_choice_7_5"><input type="checkbox" id="md_converted_choice_7_5"><code>&nbsp;* @effects returns true if and only if word is a palindrome</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" * @returns boolean"><label for="md_converted_choice_7_6"><input type="checkbox" id="md_converted_choice_7_6"><code>&nbsp;* @returns boolean</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline=" */"><label for="md_converted_choice_7_7"><input type="checkbox" id="md_converted_choice_7_7"><code>&nbsp;*/</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-specifications_in_typescript-concise_typedoc_specs" data-target="#ex-specifications_in_typescript-concise_typedoc_specs" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-specifications_in_typescript-concise_typedoc_specs"></a><span class="panel-title">Concise TypeDoc specs</span></div><div class="panel-collapse collapse exercise-panel" id="ex-specifications_in_typescript-concise_typedoc_specs" data-outline="concise_typedoc_specs" data-ex-id="specifications_in_typescript/concise_typedoc_specs" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@spec_written_typedoc"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@spec_written_typedoc"></a>For this spec written in TypeDoc:</p>
+
+<pre id="@find_winner_standard_3x3_tic-tac-toe_game_param_board_completely-full"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find_winner_standard_3x3_tic-tac-toe_game_param_board_completely-full"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * Find the winner of a standard 3x3 tic-tac-toe game.
+ * @param board   a completely-full board of 'X' or 'O', in row-major order
+ * @returns 'X' or 'O', or 'tie' if the board is a tie
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">endGame</span>(<span class="hljs-params">board: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">Array</span>&lt;'X'|'O'&gt;&gt;</span>): '<span class="hljs-title">X</span>'|'<span class="hljs-title">O</span>'|'<span class="hljs-title">tie</span>'</span></code></pre>
+
+<p id="@spec_also_uses"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@spec_also_uses"></a>(This spec also uses <a href="https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types">literal types</a> to require particular strings as input and output.)</p>
+
+<p id="@identify_information_contributed_each_line_spec_starting_function_signature"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@identify_information_contributed_each_line_spec_starting_function_signature"></a>Identify the information contributed by each line of the spec, starting with the function signature:</p>
+
+<label class="exercise-part-heading" id="@function_endgame-board_array-array-x-o"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_endgame-board_array-array-x-o"></a><code>function endGame(board: Array&lt;Array&lt;'X'|'O'&gt;&gt;): 'X'|'O'|'tie'</code></label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_8_0"><input type="radio" id="md_converted_choice_8_0" name="md_converted_radio_8">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_8_1"><input type="radio" id="md_converted_choice_8_1" name="md_converted_radio_8">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_8_2"><input type="radio" id="md_converted_choice_8_2" name="md_converted_radio_8">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_8_3"><input type="radio" id="md_converted_choice_8_3" name="md_converted_radio_8">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@find_winner_standard_3x3_tic-tac-toe_game_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find_winner_standard_3x3_tic-tac-toe_game_1"></a><code>Find the winner of a standard 3x3 tic-tac-toe game.</code></label>
+
+<div class="form-group exercise-part" data-outline="b"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_9_0"><input type="radio" id="md_converted_choice_9_0" name="md_converted_radio_9">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_9_1"><input type="radio" id="md_converted_choice_9_1" name="md_converted_radio_9">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_9_2"><input type="radio" id="md_converted_choice_9_2" name="md_converted_radio_9">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_9_3"><input type="radio" id="md_converted_choice_9_3" name="md_converted_radio_9">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@param_board_completely-full"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@param_board_completely-full"></a><code>@param board&nbsp;&nbsp;&nbsp;a completely-full board of 'X' or 'O', in row-major order</code></label>
+
+<div class="form-group exercise-part" data-outline="c"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_10_0"><input type="radio" id="md_converted_choice_10_0" name="md_converted_radio_10">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_10_1"><input type="radio" id="md_converted_choice_10_1" name="md_converted_radio_10">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_10_2"><input type="radio" id="md_converted_choice_10_2" name="md_converted_radio_10">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_10_3"><input type="radio" id="md_converted_choice_10_3" name="md_converted_radio_10">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@returns_x_o"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@returns_x_o"></a><code>@returns 'X' or 'O', or 'tie' if the board is a tie</code></label>
+
+<div class="form-group exercise-part" data-outline="d"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_11_0"><input type="radio" id="md_converted_choice_11_0" name="md_converted_radio_11">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_11_1"><input type="radio" id="md_converted_choice_11_1" name="md_converted_radio_11">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_11_2"><input type="radio" id="md_converted_choice_11_2" name="md_converted_radio_11">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_11_3"><input type="radio" id="md_converted_choice_11_3" name="md_converted_radio_11">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-specifications_in_typescript-back_to_python" data-target="#ex-specifications_in_typescript-back_to_python" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-specifications_in_typescript-back_to_python"></a><span class="panel-title">Back to Python</span></div><div class="panel-collapse collapse exercise-panel" id="ex-specifications_in_typescript-back_to_python" data-outline="back_to_python" data-ex-id="specifications_in_typescript/back_to_python" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@spec_written_python"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@spec_written_python"></a>For this spec written as a Python docstring (example adapted from a 6.100A Hangman game):</p>
+
+<pre id="@def_guess-secret_word_letters_guessed_secret_word_string_word"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@def_guess-secret_word_letters_guessed_secret_word_string_word"></a><code class="language-python hljs"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">guess</span><span class="hljs-params">(secret_word, letters_guessed)</span>:</span>
+    <span class="hljs-string">'''
+    secret_word: string, the word the user is guessing
+    letters_guessed: array (of letters), which letters have been guessed so far
+    returns: string, secret_word with not-yet-guessed letters replaced by underscores (_)
+    '''</span></code></pre>
+
+<p id="@identify_information_contributed_each_line_spec_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@identify_information_contributed_each_line_spec_1"></a>Identify the information contributed by each line of the spec:</p>
+
+<label class="exercise-part-heading" id="@def_guess-secret_word_letters_guessed_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@def_guess-secret_word_letters_guessed_1"></a><code>def guess(secret_word, letters_guessed):</code></label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_12_0"><input type="radio" id="md_converted_choice_12_0" name="md_converted_radio_12">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_12_1"><input type="radio" id="md_converted_choice_12_1" name="md_converted_radio_12">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_12_2"><input type="radio" id="md_converted_choice_12_2" name="md_converted_radio_12">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_12_3"><input type="radio" id="md_converted_choice_12_3" name="md_converted_radio_12">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@secret_word_string_word"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@secret_word_string_word"></a><code>secret_word: string, the word the user is guessing</code></label>
+
+<div class="form-group exercise-part" data-outline="b"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_13_0"><input type="radio" id="md_converted_choice_13_0" name="md_converted_radio_13">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_13_1"><input type="radio" id="md_converted_choice_13_1" name="md_converted_radio_13">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_13_2"><input type="radio" id="md_converted_choice_13_2" name="md_converted_radio_13">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_13_3"><input type="radio" id="md_converted_choice_13_3" name="md_converted_radio_13">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@letters_guessed_array_letters"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@letters_guessed_array_letters"></a><code>letters_guessed: array (of letters), which letters have been guessed so far</code></label>
+
+<div class="form-group exercise-part" data-outline="c"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_14_0"><input type="radio" id="md_converted_choice_14_0" name="md_converted_radio_14">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_14_1"><input type="radio" id="md_converted_choice_14_1" name="md_converted_radio_14">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_14_2"><input type="radio" id="md_converted_choice_14_2" name="md_converted_radio_14">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_14_3"><input type="radio" id="md_converted_choice_14_3" name="md_converted_radio_14">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@returns_string_secret_word"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@returns_string_secret_word"></a><code>returns: string, secret_word with not-yet-guessed letters replaced by underscores (_)</code></label>
+
+<div class="form-group exercise-part" data-outline="d"><div class="radio exercise-choice" data-outline="part of precondition"><label for="md_converted_choice_15_0"><input type="radio" id="md_converted_choice_15_0" name="md_converted_radio_15">part of precondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of postcondition"><label for="md_converted_choice_15_1"><input type="radio" id="md_converted_choice_15_1" name="md_converted_radio_15">part of postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="part of both precondition and postcondition"><label for="md_converted_choice_15_2"><input type="radio" id="md_converted_choice_15_2" name="md_converted_radio_15">part of both precondition and postcondition</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="neither"><label for="md_converted_choice_15_3"><input type="radio" id="md_converted_choice_15_3" name="md_converted_radio_15">neither</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+<div class="panel panel-default panel-figure pull-right"><div class="panel-body text-center"><img src="./Specifications_files/firewall-talk.svg" class="pull-right" width="400"></div></div>
+
+</div><h2 id="what_a_spec_may_talk_about"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#what_a_spec_may_talk_about"></a>What a spec may talk about</h2><div data-outline="what_a_spec_may_talk_about">
+
+<p id="@specification_function_can"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specification_function_can"></a>The specification of a function can talk about the parameters and return value of the function, but it should never talk about local variables of the function, or helper functions defined inside the function body.
+You should consider the implementation invisible to the reader of the spec.
+It’s behind the firewall as far as clients are concerned. </p>
+
+<p id="@source_code_function"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@source_code_function"></a>The source code of the function may even be unavailable to the reader of your spec, because the TypeDoc tool extracts just the spec comments from your code and renders them as HTML.
+This separation is a good thing: a spec frees the client from worrying about (or inappropriately depending on!) the details of the function’s implementation.
+The client is only obliged to pay attention to the spec.</p>
+
+<div class="clearfix"></div>
+
+</div><h2 id="avoid_null"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#avoid_null"></a>Avoid null</h2><div data-outline="avoid_null">
+
+<p id="@many_languages_allow"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@many_languages_allow"></a>Many languages allow a variable to take on the special value like <code>None</code> or <code>null</code>, which means that the variable doesn’t point to an object.
+By default, TypeScript behaves this way, so that any variable can be <code>null</code> regardless of the variable’s type:</p>
+
+<pre id="@let_word_string_null_legal_default"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_word_string_null_legal_default"></a><code class="language-typescript hljs"><span class="hljs-keyword">let</span> word: <span class="hljs-built_in">string</span> = <span class="hljs-literal">null</span>;  <span class="hljs-comment">// legal by default!</span></code></pre>
+
+<p id="@unfortunate_hole_static"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@unfortunate_hole_static"></a>This is an unfortunate hole in the static type system, because <code>null</code> is not truly a legal <code>string</code> value.
+You can’t call any methods or use any properties with this reference:</p>
+
+<pre id="@word-tolowercase_throws_typeerror"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@word-tolowercase_throws_typeerror"></a><code class="language-js hljs javascript">word.toLowerCase() <span class="hljs-comment">// throws TypeError</span>
+word.length        <span class="hljs-comment">// throws TypeError</span></code></pre>
+
+<p id="@note_particular_null"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@note_particular_null"></a>Note in particular that <code>null</code> is not the same as an empty string <code>""</code> or an empty array <code>[ ]</code>.
+On an empty string or empty array, you <em>can</em> call methods and access instance variables.
+The length of an empty array or an empty string is 0.
+The length of a string variable that points to <code>null</code> isn’t anything: accessing <code>length</code> throws a <code>TypeError</code>.</p>
+
+<p id="@also_note_array"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@also_note_array"></a>Also note that an array might be non-null but contain <code>null</code> as a value:</p>
+
+<div class="panel panel-default panel-figure pull-right pull-margin"><div class="panel-body text-center"><img src="./Specifications_files/contain-null.svg" class="pull-right" width="200"></div></div>
+
+<pre id="@let_words_array-string"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_words_array-string"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">let</span> words: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt; = [ <span class="hljs-literal">null</span> ];</code></pre>
+
+<p id="@these_nulls_likely"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@these_nulls_likely"></a>These <code>null</code>s are likely to cause errors as soon as someone tries to use the contents of the array.</p>
+
+<p id="@null_values_troublesome"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@null_values_troublesome"></a>Null values are troublesome and unsafe, so much so that good programming tries to avoid them.
+As a general convention, <strong>null values are disallowed in parameters and return values</strong> unless the spec explicitly says otherwise.
+So every function has a precondition on the object and array types in its parameters that they be non-null – including elements of collections like arrays, sets, and maps.
+Every function that can return object or array types implicitly has a postcondition that their values are non-null, again including elements of collection types.</p>
+
+<p id="@typescript_strict_null"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@typescript_strict_null"></a>When TypeScript has <a href="https://www.typescriptlang.org/tsconfig#strictNullChecks">strict null checking enabled</a> (which is the 6.102 configuration), the static type checker guarantees this:</p>
+
+<pre id="@let_word_string_null_compile_error"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_word_string_null_compile_error"></a><code class="language-typescript hljs"><span class="hljs-keyword">let</span> word: <span class="hljs-built_in">string</span> = <span class="hljs-literal">null</span>;  <span class="hljs-comment">// compile error when strict null checking is on</span>
+<span class="hljs-keyword">let</span> words: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt; = [ <span class="hljs-literal">null</span> ]; <span class="hljs-comment">// compile error when strict null checking is on</span></code></pre>
+
+<p id="@if_function_allows"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_function_allows"></a>If a function allows <code>null</code> in a parameter or return value, it needs to explicitly declare <code>null</code> in the type (e.g. <code>string|null</code>).
+But this should be done sparingly.
+<strong>Avoid <code>null</code></strong>.</p>
+
+<p id="@google_their_own"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@google_their_own"></a>Google has their own <a href="https://github.com/google/guava/wiki/UsingAndAvoidingNullExplained">discussion of <code>null</code> in Guava, the company’s core Java libraries</a>.
+The project explains:</p>
+
+<blockquote>
+  <p id="@careless_use_null"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@careless_use_null"></a>Careless use of <code>null</code> can cause a staggering variety of bugs.
+  Studying the Google code base, we found that something like 95% of collections weren’t supposed to have any null values in them, and having those <strong>fail fast</strong>* rather than silently accept <code>null</code> would have been helpful to developers.</p>
+  
+  <p id="@additionally_null_unpleasantly"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@additionally_null_unpleasantly"></a>Additionally, <code>null</code> is unpleasantly ambiguous.
+  It’s rarely obvious what a <code>null</code> return value is supposed to mean — for example, <code>Map.get(key)</code> [in Java] can return <code>null</code> either because the value in the map is <code>null</code>, or the value is not in the map.
+  Null can mean failure, can mean success, can mean almost anything.
+  Using something other than <code>null</code> <strong>makes your meaning clear</strong>.*</p>
+</blockquote>
+
+<p id="@boldface_added_emphasis"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@boldface_added_emphasis"></a>(*Boldface added for emphasis.)</p>
+
+</div><h2 id="include_emptiness"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#include_emptiness"></a>Include emptiness</h2><div data-outline="include_emptiness">
+
+<p id="@make_sure_understand"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@make_sure_understand"></a>Make sure to understand the difference between <code>null</code> and emptiness.</p>
+
+<p id="@recall_python_none"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@recall_python_none"></a>Recall that in Python, <code>None</code> is not the same as the empty string <code>""</code>, the empty array <code>[ ]</code>, or the empty dictionary <code>{ }</code>.
+These empty objects like these are <em>valid objects</em> that simply happen to contain no elements.
+But you can use them with all the usual operations allowed by the type.
+For example, <code>len("")</code> returns 0, and <code>"" + "a"</code> returns <code>"a"</code>.
+That’s not true of <code>None</code>: <code>len(None)</code> and <code>None + "a"</code> both produce errors.</p>
+
+<p id="@same_idea_translates"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@same_idea_translates"></a>The same idea translates to TypeScript.
+The <code>null</code> reference is not a valid string, or array, or map, or any other object.
+But the empty string <code>""</code> is a valid <code>string</code> value, and the empty array <code>[ ]</code> is a valid array value.</p>
+
+<p id="@upshot_empty_values"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@upshot_empty_values"></a>The upshot of this is that <strong>empty values are always allowed as parameter or return values</strong> unless a spec explicitly disallows them.</p>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-include_emptiness"><h4 class="text-danger" id="@reading_exercises_3"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_3"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-include_emptiness-vacuous_statements" data-target="#ex-include_emptiness-vacuous_statements" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-include_emptiness-vacuous_statements"></a><span class="panel-title">Vacuous statements</span></div><div class="panel-collapse collapse exercise-panel" id="ex-include_emptiness-vacuous_statements" data-outline="vacuous_statements" data-ex-id="include_emptiness/vacuous_statements" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@consider_function_whose"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@consider_function_whose"></a>Consider a function whose type signature is:</p>
+
+<pre id="@computesomething-array_array-string_string"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@computesomething-array_array-string_string"></a><code class="language-ts hljs typescript">computeSomething(array: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;): <span class="hljs-built_in">string</span></code></pre>
+
+<p id="@which_following_preconditions_array_would_allow_calling_computesomething_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_following_preconditions_array_would_allow_calling_computesomething_0"></a>Which of the following preconditions on <code>array</code> would allow calling <code>computeSomething([])</code>?</p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="requires: all strings in array use only uppercase letters"><label for="md_converted_choice_16_0"><input type="checkbox" id="md_converted_choice_16_0">requires: all strings in <code>array</code> use only uppercase letters</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: each string in array has nonzero length"><label for="md_converted_choice_16_1"><input type="checkbox" id="md_converted_choice_16_1">requires: each string in <code>array</code> has nonzero length</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: array consists of Athena usernames"><label for="md_converted_choice_16_2"><input type="checkbox" id="md_converted_choice_16_2">requires: <code>array</code> consists of Athena usernames</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: array[i].toUpperCase() === array[i] for all valid indices i"><label for="md_converted_choice_16_3"><input type="checkbox" id="md_converted_choice_16_3">requires: <code>array[i].toUpperCase() === array[i]</code> for all valid indices i</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<p id="@which_following_preconditions_array_would_allow_calling_computesomething_1"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_following_preconditions_array_would_allow_calling_computesomething_1"></a>Which of the following preconditions on <code>array</code> would allow calling <code>computeSomething([""])</code>?</p>
+
+<div class="form-group exercise-part" data-outline="b"><div class="checkbox exercise-choice" data-outline="requires: all strings in array use only uppercase letters"><label for="md_converted_choice_17_0"><input type="checkbox" id="md_converted_choice_17_0">requires: all strings in <code>array</code> use only uppercase letters</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: each string in array has nonzero length"><label for="md_converted_choice_17_1"><input type="checkbox" id="md_converted_choice_17_1">requires: each string in <code>array</code> has nonzero length</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: array consists of Athena usernames"><label for="md_converted_choice_17_2"><input type="checkbox" id="md_converted_choice_17_2">requires: <code>array</code> consists of Athena usernames</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: array[i].toUpperCase() === array[i] for all valid indices i"><label for="md_converted_choice_17_3"><input type="checkbox" id="md_converted_choice_17_3">requires: <code>array[i].toUpperCase() === array[i]</code> for all valid indices i</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<p id="@which_following_preconditions_array_would_allow_calling_computesomething-null"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_following_preconditions_array_would_allow_calling_computesomething-null"></a>Which of the following preconditions on <code>array</code> would allow calling <code>computeSomething([null])</code>?</p>
+
+<div class="form-group exercise-part" data-outline="c"><div class="checkbox exercise-choice" data-outline="requires: all strings in array use only uppercase letters"><label for="md_converted_choice_18_0"><input type="checkbox" id="md_converted_choice_18_0">requires: all strings in <code>array</code> use only uppercase letters</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: each string in array has nonzero length"><label for="md_converted_choice_18_1"><input type="checkbox" id="md_converted_choice_18_1">requires: each string in <code>array</code> has nonzero length</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: array consists of Athena usernames"><label for="md_converted_choice_18_2"><input type="checkbox" id="md_converted_choice_18_2">requires: <code>array</code> consists of Athena usernames</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="requires: array[i].toUpperCase() === array[i] for all valid indices i"><label for="md_converted_choice_18_3"><input type="checkbox" id="md_converted_choice_18_3">requires: <code>array[i].toUpperCase() === array[i]</code> for all valid indices i</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-include_emptiness-intervals" data-target="#ex-include_emptiness-intervals" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-include_emptiness-intervals"></a><span class="panel-title">Intervals</span></div><div class="panel-collapse collapse exercise-panel" id="ex-include_emptiness-intervals" data-outline="intervals" data-ex-id="include_emptiness/intervals" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@two_common_kinds"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@two_common_kinds"></a>Two common kinds of mathematical shorthand, often seen in specifications, are <em>compound inequalities</em> and <em>intervals</em>:</p>
+
+<ul id="@x_b_means">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@x_b_means"></a><code>a ≤ x ≤ b</code> means <code>a ≤ x</code> and <code>x ≤ b</code>.</li>
+<li><code>a &lt; x &lt; b</code> means <code>a &lt; x</code> and <code>x &lt; b</code>.</li>
+<li><code>a ≤ x &lt; b</code> means <code>a ≤ x</code> and <code>x &lt; b</code>.</li>
+<li><code>[a,b]</code> is a <em>closed</em> interval defined as the set of all <code>x</code> such that <code>a ≤ x ≤ b</code>.</li>
+<li><code>(a,b)</code> is an <em>open</em> interval defined as the set of all <code>x</code> such that <code>a &lt; x &lt; b</code>.</li>
+<li><code>[a,b)</code> is a <em>half-open</em> interval defined as the set of all <code>x</code> such that <code>a ≤ x &lt; b</code>.</li>
+</ul>
+
+<p id="@suppose_you_specification"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@suppose_you_specification"></a>Suppose you have a specification that uses one of these notations:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@oddsinrange-a_number_b"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@oddsinrange-a_number_b"></a><code class="language-ts hljs typescript">oddsInRange(a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span>): Set&lt;<span class="hljs-built_in">number</span>&gt;</code></pre>
+
+<dl id="@effects_returns_odd">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@effects_returns_odd"></a>effects:</dt>
+<dd>returns odd integers <code>x</code> such that <code>x</code> ∈ <code>[a,b)</code></dd>
+</dl></div>
+
+<p id="@does_use_half-open"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@does_use_half-open"></a>What does the use of the half-open interval notation <code>[a,b)</code> imply about the allowable values for <code>a</code> and <code>b</code>?</p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="there is an implicit precondition that a &lt; b "><label for="md_converted_choice_19_0"><input type="radio" id="md_converted_choice_19_0" name="md_converted_radio_19">there is an implicit precondition that <code>a &lt; b</code> </label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="there is an implicit precondition that a ≤ b"><label for="md_converted_choice_19_1"><input type="radio" id="md_converted_choice_19_1" name="md_converted_radio_19">there is an implicit precondition that <code>a ≤ b</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="a and b can be arbitrary numbers"><label for="md_converted_choice_19_2"><input type="radio" id="md_converted_choice_19_2" name="md_converted_radio_19"><code>a</code> and <code>b</code> can be arbitrary numbers</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="this specification is insufficient, and needs an explicit precondition relating a and b"><label for="md_converted_choice_19_3"><input type="radio" id="md_converted_choice_19_3" name="md_converted_radio_19">this specification is insufficient, and needs an explicit precondition relating <code>a</code> and <code>b</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-include_emptiness-combining_no_things" data-target="#ex-include_emptiness-combining_no_things" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-include_emptiness-combining_no_things"></a><span class="panel-title">Combining no things</span></div><div class="panel-collapse collapse exercise-panel" id="ex-include_emptiness-combining_no_things" data-outline="combining_no_things" data-ex-id="include_emptiness/combining_no_things" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@elements_set_list"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@elements_set_list"></a>The elements of a set or list are often combined with a binary operator, like addition or multiplication or boolean AND.
+The meaning of such a combination is straightforward when the set or list has at least one element in it.
+But it is also well-defined when the set or list is empty.</p>
+
+<p id="@sum_elements_set"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@sum_elements_set"></a>The sum of the elements of the set <code>{ 3, 5 }</code> is 8. What is the sum of an empty set of numbers?</p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="textfield exercise-choice"><input type="text" class="form-control" style="width: 25%;"><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@product_elements_set"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@product_elements_set"></a>The product of the elements of the set <code>{ 3, 5 }</code> is 15. What is the product of an empty set of numbers?</p>
+
+<div class="form-group exercise-part" data-outline="b"><div class="textfield exercise-choice"><input type="text" class="form-control" style="width: 25%;"><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@boolean_elements_set_true_false_false"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@boolean_elements_set_true_false_false"></a>The boolean AND of the elements of the set <code>{ true, false }</code> is <code>false</code>. What is the boolean AND of an empty set of booleans?</p>
+
+<div class="form-group exercise-part" data-outline="c"><div class="textfield ttfont exercise-choice"><input type="text" class="form-control" style="width: 26%;"><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@boolean_elements_set_true_false_true"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@boolean_elements_set_true_false_true"></a>The boolean OR of the elements of the set <code>{ true, false }</code> is <code>true</code>. What is the boolean OR of an empty set of booleans?</p>
+
+<div class="form-group exercise-part" data-outline="d"><div class="textfield ttfont exercise-choice"><input type="text" class="form-control" style="width: 28%;"><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@string_concatenation_elements"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@string_concatenation_elements"></a>The string concatenation of the elements of the set <code>{ "a", "b" }</code> is <code>"ab"</code>.  What is the string concatenation of an empty set of strings?</p>
+
+<div class="form-group exercise-part" data-outline="e"><div class="textfield ttfont exercise-choice"><input type="text" class="form-control" style="width: 29%;"><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@set_union_list"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@set_union_list"></a>The set union of the list of sets <code>[ {1, 2}, {3} ]</code> is the set <code>{1, 2, 3}</code>.  What is the set union of an empty list of sets?</p>
+
+<div class="form-group exercise-part" data-outline="f"><div class="textfield ttfont exercise-choice"><input type="text" class="form-control" style="width: 25%;"><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+</div><h2 id="testing_and_specifications"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#testing_and_specifications"></a>Testing and specifications</h2><div data-outline="testing_and_specifications">
+
+<p id="@testing_talk_about"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@testing_talk_about"></a>In testing, we talk about <em>black box tests</em> that are chosen with only the specification in mind, and <em>glass box tests</em> that are chosen with knowledge of the actual implementation (<a href="https://web.mit.edu/6.102/www/sp25/classes/02-testing/#black_box_and_glass_box_testing"><em>Testing</em></a>).
+But it’s important to note that <strong>even glass box tests must follow the specification</strong>.
+Your implementation may provide stronger guarantees than the specification calls for, or it may have specific behavior where the specification is undefined.
+But your test cases should not count on that behavior.
+Test cases must be <a href="https://web.mit.edu/6.102/www/sp25/classes/02-testing/#systematic_testing">correct</a>, obeying the contract just like every other client.</p>
+
+<p id="@example_suppose_you"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@example_suppose_you"></a>For example, suppose you are testing this specification of <code>find</code>, slightly different from the one we’ve used so far:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@find-arr_array-number_val_number_number_4"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@find-arr_array-number_val_number_number_4"></a><code class="language-ts hljs typescript">find(arr: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;, val: <span class="hljs-built_in">number</span>): <span class="hljs-built_in">number</span></code></pre>
+
+<dl id="@requires_val_occurs_arr_effects_returns">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_val_occurs_arr_effects_returns"></a>requires:</dt>
+<dd><code>val</code> occurs in <code>arr</code></dd>
+
+<dt>effects:</dt>
+<dd>returns index <code>i</code> such that <code>arr[i]</code> = <code>val</code></dd>
+</dl></div>
+
+<p id="@spec_strong_precondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@spec_strong_precondition"></a>This spec has a strong precondition in the sense that <code>val</code> is required to be found; and it has a fairly weak postcondition in the sense that if <code>val</code> appears more than once in the array, this specification says nothing about which particular index of <code>val</code> is returned.
+Even if you implemented <code>find</code> so that it always returns the lowest index, your test case can’t assume that specific behavior:</p>
+
+<pre class="no-markdown" id="@let_array_array"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_array_array"></a><code class="ts hljs typescript"><span class="hljs-keyword">let</span> array: <span class="hljs-built_in">Array</span><number> = [<span class="hljs-number">7</span>, <span class="hljs-number">7</span>, <span class="hljs-number">7</span>];
+<span class="hljs-keyword">let</span> i = find(array, <span class="hljs-number">7</span>);
+<strike>assert.strictEqual(i, <span class="hljs-number">0</span>);</strike>  <span class="hljs-comment">// bad test case: assumes too much, more than the postcondition promises</span>
+assert.strictEqual(array[i], <span class="hljs-number">7</span>);  <span class="hljs-comment">// correct</span>
+</number></code></pre>
+
+<p id="@similarly_even_if"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@similarly_even_if"></a>Similarly, even if you implemented <code>find</code> so that it (sensibly) throws an exception when <code>val</code> isn’t found, instead of returning some arbitrary misleading index, your test case can’t assume that behavior, because it can’t call <code>find()</code> in a way that violates the precondition.</p>
+
+<p id="@so_does_glass"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@so_does_glass"></a>So what does glass box testing mean, if it can’t go beyond the spec?
+It means you are trying to find new test cases that exercise different parts of this particular implementation, but assert the behavior in an implementation-independent way, following the spec.</p>
+
+<h3 id="testing_units"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#testing_units"></a>Testing units</h3><div data-outline="testing_units">
+
+<p id="@recall_search_engine"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@recall_search_engine"></a>Recall the <a href="https://web.mit.edu/6.102/www/sp25/classes/02-testing/#unit_and_integration_testing">search engine example from <em>Testing</em></a> with these functions:</p>
+
+<pre id="@returns_contents_file"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@returns_contents_file"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/** 
+ * @returns the contents of the file
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">load</span>(<span class="hljs-params">filename: <span class="hljs-built_in">string</span></span>): <span class="hljs-title">string</span> </span>{ ... }
+
+<span class="hljs-comment">/** 
+ * @returns the words in string s, in the order they appear,
+ *         where a word is a contiguous sequence of
+ *         non-whitespace and non-punctuation characters
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">extract</span>(<span class="hljs-params">s: <span class="hljs-built_in">string</span></span>): <span class="hljs-title">Array</span>&lt;<span class="hljs-title">string</span>&gt; </span>{ ... }
+
+<span class="hljs-comment">/**
+ * @returns an index mapping a word to the set of filenames
+ *         containing that word, for all files in the input set
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">index</span>(<span class="hljs-params">filenames: Set&lt;<span class="hljs-built_in">string</span>&gt;</span>): <span class="hljs-title">Map</span>&lt;<span class="hljs-title">string</span>, <span class="hljs-title">Set</span>&lt;<span class="hljs-title">string</span>&gt;&gt;  </span>{
+    ...
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> file of files) {
+        <span class="hljs-keyword">let</span> doc = load(file);
+        <span class="hljs-keyword">let</span> words = extract(doc);
+        ...
+    }
+    ...
+} </code></pre>
+
+<p id="@talked_then_about"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@talked_then_about"></a>We talked then about <mark data-structure-text="unit testing" id="^unit_testing"><em>unit testing</em></mark>, the idea that we should write tests of each module of our program in isolation.
+A good unit test is focused on just a single specification.
+Our tests will nearly always rely on the specs of JavaScript library functions, but a unit test for one function we’ve written shouldn’t fail if a <em>different</em> function fails to satisfy its spec.
+As we saw in the example, a test for <code>extract()</code> shouldn’t fail if <code>load()</code> doesn’t satisfy its postcondition.</p>
+
+<p id="@good_integration_tests"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@good_integration_tests"></a>Good <mark data-mark-text="integration testing" data-structure-text="integration testing" id="^integration_testing"><em>integration tests</em></mark>, tests that use a combination of modules, will make sure that our different functions have compatible specifications: callers and implementers of different functions are passing and returning values as the other expects.
+Integration tests cannot replace systematically-designed unit tests.
+From the example, if we only ever test <code>extract</code> by calling <code>index</code>, we will only test it on a potentially small part of its input space: inputs that are possible outputs of <code>load</code>.
+In doing so, we’ve left a place for bugs to hide, ready to jump out when we use <code>extract</code> for a different purpose elsewhere in our program, or when <code>load</code> starts returning documents written in a new format, etc.</p>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-testing_and_specifications"><h4 class="text-danger" id="@reading_exercises_4"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_4"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-testing_and_specifications-gcd_1" data-target="#ex-testing_and_specifications-gcd_1" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-testing_and_specifications-gcd_1"></a><span class="panel-title">gcd 1</span></div><div class="panel-collapse collapse exercise-panel" id="ex-testing_and_specifications-gcd_1" data-outline="gcd_1" data-ex-id="testing_units/gcd_1" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@alice_writes_following"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@alice_writes_following"></a>Alice writes the following code:</p>
+
+<pre id="@function_gcd-a_number"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@function_gcd-a_number"></a><code class="language-ts hljs typescript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">gcd</span>(<span class="hljs-params">a: <span class="hljs-built_in">number</span>, b: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span> </span>{
+    <span class="hljs-keyword">if</span> (a &gt; b) {
+        <span class="hljs-keyword">return</span> gcd(a-b, b);
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (b &gt; a) {
+        <span class="hljs-keyword">return</span> gcd(a, b-a);
+    }
+    <span class="hljs-keyword">return</span> a;
+}</code></pre>
+
+<p id="@bob_writes_following"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@bob_writes_following"></a>Bob writes the following test:</p>
+
+<pre id="@it-tests_gcd_function"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@it-tests_gcd_function"></a><code class="language-ts hljs typescript">it(<span class="hljs-string">"tests gcd"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    assert.strictEqual(gcd(<span class="hljs-number">24</span>, <span class="hljs-number">54</span>), <span class="hljs-number">6</span>);
+});</code></pre>
+
+<p id="@test_passes_but"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@test_passes_but"></a>The test passes!
+But where’s the spec?</p>
+
+<p id="@alice_should_write_0_precondition_gcd"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@alice_should_write_0_precondition_gcd"></a>Alice should write <code>a &gt; 0</code> in the precondition of <code>gcd</code></p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="True"><label for="md_converted_choice_20_0"><input type="radio" id="md_converted_choice_20_0" name="md_converted_radio_20">True</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="False"><label for="md_converted_choice_20_1"><input type="radio" id="md_converted_choice_20_1" name="md_converted_radio_20">False</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@alice_should_write_b_0_precondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@alice_should_write_b_0_precondition"></a>Alice should write <code>b &gt; 0</code> in the precondition of <code>gcd</code></p>
+
+<div class="form-group exercise-part" data-outline="b"><div class="radio exercise-choice" data-outline="True"><label for="md_converted_choice_21_0"><input type="radio" id="md_converted_choice_21_0" name="md_converted_radio_21">True</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="False"><label for="md_converted_choice_21_1"><input type="radio" id="md_converted_choice_21_1" name="md_converted_radio_21">False</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@alice_should_write_gcd-a_b_0"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@alice_should_write_gcd-a_b_0"></a>Alice should write <code>gcd(a, b) &gt; 0</code> in the precondition of <code>gcd</code></p>
+
+<div class="form-group exercise-part" data-outline="c"><div class="radio exercise-choice" data-outline="True"><label for="md_converted_choice_22_0"><input type="radio" id="md_converted_choice_22_0" name="md_converted_radio_22">True</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="False"><label for="md_converted_choice_22_1"><input type="radio" id="md_converted_choice_22_1" name="md_converted_radio_22">False</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<p id="@alice_should_write_b_integers_precondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@alice_should_write_b_integers_precondition"></a>Alice should write <code>a and b are integers</code> in the precondition of <code>gcd</code></p>
+
+<div class="form-group exercise-part" data-outline="d"><div class="radio exercise-choice" data-outline="True"><label for="md_converted_choice_23_0"><input type="radio" id="md_converted_choice_23_0" name="md_converted_radio_23">True</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="False"><label for="md_converted_choice_23_1"><input type="radio" id="md_converted_choice_23_1" name="md_converted_radio_23">False</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-testing_and_specifications-gcd_2" data-target="#ex-testing_and_specifications-gcd_2" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-testing_and_specifications-gcd_2"></a><span class="panel-title">gcd 2</span></div><div class="panel-collapse collapse exercise-panel" id="ex-testing_and_specifications-gcd_2" data-outline="gcd_2" data-ex-id="testing_units/gcd_2" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@if_alice_adds"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_alice_adds"></a>If Alice adds <code>a &gt; 0</code> to the precondition, Bob should test negative values of <code>a</code></p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="radio exercise-choice" data-outline="True"><label for="md_converted_choice_24_0"><input type="radio" id="md_converted_choice_24_0" name="md_converted_radio_24">True</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="False"><label for="md_converted_choice_24_1"><input type="radio" id="md_converted_choice_24_1" name="md_converted_radio_24">False</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<p id="@if_alice_does"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_alice_does"></a>If Alice does not add <code>a &gt; 0</code> to the precondition, Bob should test negative values of <code>a</code></p>
+
+<div class="form-group exercise-part" data-outline="b"><div class="radio exercise-choice" data-outline="True"><label for="md_converted_choice_25_0"><input type="radio" id="md_converted_choice_25_0" name="md_converted_radio_25">True</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="False"><label for="md_converted_choice_25_1"><input type="radio" id="md_converted_choice_25_1" name="md_converted_radio_25">False</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+</div><h3 id="all_tests_must_follow_the_spec"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#all_tests_must_follow_the_spec"></a>All tests must follow the spec</h3><div data-outline="all_tests_must_follow_the_spec">
+
+<p id="@cannot_test_behavior"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@cannot_test_behavior"></a>We cannot test for behavior when a precondition is violated: for example, we cannot check that a function fails fast as opposed to returning a garbage value on some illegal input, because <strong>all tests must follow the spec</strong>.
+If the precondition is one that the implementer can reasonably check, then it often makes sense to change the spec: remove the precondition, and instead specify the behavior in the postcondition.
+We’ll discuss two ways to do that below (<a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#exceptions">exceptions</a> and <a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#special_results">special results</a>) and dive deeply into spec-writing decisions like this in the next reading.</p>
+
+</div></div><h2 id="specifications_for_mutating_functions"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specifications_for_mutating_functions"></a>Specifications for mutating functions</h2><div data-outline="specifications_for_mutating_functions">
+
+<p id="@discussed_mutable_vs"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@discussed_mutable_vs"></a>We discussed mutable vs. immutable objects in an earlier reading (<a href="https://web.mit.edu/6.102/www/sp25/classes/01-static-checking/#mutating_values_vs_reassigning_variables"><em>Static Checking</em></a>).
+But our specification examples thus far haven’t illustrated how to describe <mark data-mark-text="side-effect" data-structure-text="side-effect" id="^side-effect"><em>side-effects</em></mark> — changes to mutable objects or input/output state — in the postcondition.</p>
+
+<p id="@so_here-s_specification"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@so_here-s_specification"></a>So here’s a specification that describes a function that mutates an object:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@addall-array1_array-string_array2"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@addall-array1_array-string_array2"></a><code class="language-ts hljs typescript">addAll(array1: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;, array2: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;): <span class="hljs-built_in">boolean</span></code></pre>
+
+<dl id="@requires_array1_array2">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_array1_array2"></a>requires:</dt>
+<dd><code>array1</code> and <code>array2</code> are not the same object</dd>
+
+<dt>effects:</dt>
+<dd>modifies <code>array1</code> by adding the elements of <code>array2</code> to the end of it, and returns true if and only if <code>array1</code> changed as a result of call</dd>
+</dl></div>
+
+<p id="@first_look_postcondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@first_look_postcondition"></a>First, look at the postcondition.
+It gives two constraints: the first telling us how <code>array1</code> is modified, and the second telling us how the return value is determined.</p>
+
+<div class="panel panel-default panel-figure pull-right pull-margin"><div class="panel-body text-center"><img src="./Specifications_files/addall1.svg" width="150"><hr style="margin:0">
+<img src="./Specifications_files/addall2.svg" width="150"><hr style="margin:0">
+<img src="./Specifications_files/addall-infinitum.svg" width="150"></div></div>
+
+<p id="@second_look_precondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@second_look_precondition"></a>Second, look at the precondition.
+It tells us that <code>array1</code> cannot be the same object as <code>array2</code>.
+The behavior of the function if you attempt to add the elements of an array to itself is undefined.
+You can easily imagine why the implementer of the function would want to impose this constraint: it’s not likely to rule out any useful applications of the function, and it makes it easier to implement.
+The specification allows a simple implementation in which you take an element from <code>array2</code> and add it to <code>array1</code>, then go on to the next element of <code>array2</code> until you get to the end.</p>
+
+<p id="@if_array1_array2_same_array_simple"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_array1_array2_same_array_simple"></a>If <code>array1</code> and <code>array2</code> are the same array, this simple algorithm will not terminate, as shown in the sequence of snapshot diagrams on the right — or practically speaking it will throw a memory error when the array object has grown so large that it consumes all available memory.
+Either outcome, infinite loop or crash, is permitted by the specification because of its precondition.</p>
+
+<p id="@here_another_example"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@here_another_example"></a>Here is another example of a mutating function:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@sort-array_array-string_void"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@sort-array_array-string_void"></a><code class="language-ts hljs typescript">sort(array: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;): <span class="hljs-built_in">void</span></code></pre>
+
+<dl id="@requires_nothing_effects_puts_array_sorted">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_nothing_effects_puts_array_sorted"></a>requires:</dt>
+<dd>nothing</dd>
+
+<dt>effects:</dt>
+<dd>puts <code>array</code> in sorted order, <em>i.e.</em> <code>array[i]</code> ≤ <code>array[j]</code> for all 0 ≤ <code>i</code> &lt; <code>j</code> &lt; <code>array.length</code></dd>
+</dl></div>
+
+<p id="@example_function_does"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@example_function_does"></a>And an example of a function that does not mutate its argument:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@tolowercase-array_array-string_array-string"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@tolowercase-array_array-string_array-string"></a><code class="language-ts hljs typescript">toLowerCase(array: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;): <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;</code></pre>
+
+<dl id="@requires_nothing_effects_returns_new_array">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_nothing_effects_returns_new_array"></a>requires:</dt>
+<dd>nothing</dd>
+
+<dt>effects:</dt>
+<dd>returns a new array <code>t</code>, with same length as <code>array</code>, where <code>t[i]</code> = <code>array[i].toLowerCase()</code></dd>
+</dl></div>
+
+<p id="@just_null_implicitly"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@just_null_implicitly"></a>Just as <code>null</code> is implicitly disallowed unless stated otherwise, programmers also assume that <strong>mutation is disallowed unless stated otherwise</strong>.
+The spec of <code>to­Lower­Case</code> could explicitly state as an <em>effect</em> that “array is not modified”, but in the absence of a postcondition describing mutation, we demand no mutation of the inputs.</p>
+
+<p id="@writing_specification_typedoc"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@writing_specification_typedoc"></a>When writing a specification in TypeDoc, mutations that affect a parameter can be described in the corresponding <code>@param</code> clause:</p>
+
+<pre id="@sorts_array_param"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@sorts_array_param"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * Sorts an array.
+ * @param array - mutated into sorted order, so that
+ *     array[i] ≤ array[j] for all 0 ≤ i &lt; j &lt; array.length.
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">sort</span>(<span class="hljs-params">array: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;</span>): <span class="hljs-title">void</span> </span>{ ... }</code></pre>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-specifications_for_mutating_functions"><h4 class="text-danger" id="@reading_exercises_5"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_5"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-specifications_for_mutating_functions-code_review" data-target="#ex-specifications_for_mutating_functions-code_review" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-specifications_for_mutating_functions-code_review"></a><span class="panel-title">Code review</span></div><div class="panel-collapse collapse exercise-panel" id="ex-specifications_for_mutating_functions-code_review" data-outline="code_review" data-ex-id="specifications_for_mutating_functions/code_review" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@consider_spec"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@consider_spec"></a>Consider this spec:</p>
+
+<div class="handout-spec panel panel-default"><pre id="@min_value-array_array-number_number"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@min_value-array_array-number_number"></a><code class="language-ts hljs typescript">min_value(array: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">number</span>&gt;): <span class="hljs-built_in">number</span></code></pre>
+
+<dl id="@requires_array-length_0">
+<dt><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@requires_array-length_0"></a>requires:</dt>
+<dd><code>array.length</code> &gt; 0</dd>
+
+<dt>effects:</dt>
+<dd>returns the smallest number in <code>array</code></dd>
+</dl></div>
+
+<p id="@you_code-reviewing_various"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@you_code-reviewing_various"></a>You are code-reviewing various implementations of <code>min_value</code>.
+Which of the following statements might be appropriate to say?
+Assume each one is indeed true of the particular implementation you are looking at.</p>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="”this implementation violates the spec because it runs in O(n log n) time (where n = array.length), instead of O(n) time”"><label for="md_converted_choice_26_0"><input type="checkbox" id="md_converted_choice_26_0">”this implementation violates the spec because it runs in <code>O(n log n)</code> time (where <code>n = array.length</code>), instead of <code>O(n)</code> time”</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="”this implementation violates the spec because it sorts array”"><label for="md_converted_choice_26_1"><input type="checkbox" id="md_converted_choice_26_1">”this implementation violates the spec because it sorts <code>array</code>”</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="”this implementation violates the spec because it returns 0 when array is empty”"><label for="md_converted_choice_26_2"><input type="checkbox" id="md_converted_choice_26_2">”this implementation violates the spec because it returns 0 when <code>array</code> is empty”</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+</div><h2 id="exceptions"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#exceptions"></a>Exceptions</h2><div data-outline="exceptions">
+
+<p id="@now_writing_specifications"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@now_writing_specifications"></a>Now that we’re writing specifications and thinking about how clients will use our functions, let’s discuss how to handle <em>exceptional</em> cases in a way that is safe from bugs and easy to understand.</p>
+
+<p id="@since_exception_possible"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@since_exception_possible"></a>Since an <mark data-structure-text="exception" id="^exception"><em>exception</em></mark> is a possible output from a function, it may have to be described in the postcondition for the function.
+An exception can be documented with a <a href="https://typedoc.org/tags/throws/"><code>@throws</code> clause</a> in the documentation comment.
+This section discusses when to include an exception in a specification, and when not to.</p>
+
+<h3 id="exceptions_for_signaling_bugs"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#exceptions_for_signaling_bugs"></a>Exceptions for signaling bugs</h3><div data-outline="exceptions_for_signaling_bugs">
+
+<p id="@you-ve_probably_already"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@you-ve_probably_already"></a>You’ve probably already seen some <mark data-structure-text="exception" id="^exception_2"><em>exceptions</em></mark> in your Python or TypeScript programming so far.
+For example, in Python:</p>
+
+<ul id="@indexerror_thrown_array">
+<li><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@indexerror_thrown_array"></a><code>IndexError</code> is thrown when an array index <code>array[i]</code> is outside the valid range for the array <code>array</code></li>
+<li><code>KeyError</code> is thrown when a dictionary lookup <code>dict[key]</code> finds no matching key</li>
+<li><code>TypeError</code> is thrown for a variety of dynamic type errors, such as trying to call a method on <code>None</code></li>
+</ul>
+
+<p id="@typescript_also_typeerror"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@typescript_also_typeerror"></a>TypeScript also has <code>TypeError</code> for dynamic type errors, but most dynamic errors are signaled with a generic <code>Error</code> class.</p>
+
+<p id="@these_kinds_exceptions"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@these_kinds_exceptions"></a>These kinds of exceptions generally indicate <strong>bugs</strong> – in either the client or the implementation – and the information displayed when the exception is thrown can help you find and fix the bug.</p>
+
+<p id="@exceptions_signal_bugs"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@exceptions_signal_bugs"></a>Exceptions that signal bugs are not part of the postcondition of a function, so they should not appear in <code>@throws</code>.
+For example, <code>TypeError</code> normally should never be mentioned in a spec.
+The types of the arguments are part of the precondition, which means that a valid implementation is free to throw <code>TypeError</code> without any warning if those types are violated (for example, if a client manages to pass a null value).
+So this spec, for example, never mentions <code>TypeError</code>:</p>
+
+<pre id="@param_array_array"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@param_array_array"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * @param array array of strings to convert to lower case
+ * @returns new array t, same length as array, 
+ *         where t[i] is array[i] converted to lowercase for all valid indices i
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">toLowerCase</span>(<span class="hljs-params">array: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;</span>): <span class="hljs-title">Array</span>&lt;<span class="hljs-title">string</span>&gt;</span></code></pre>
+
+</div><h3 id="exceptions_for_anticipated_failures"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#exceptions_for_anticipated_failures"></a>Exceptions for anticipated failures</h3><div data-outline="exceptions_for_anticipated_failures">
+
+<p id="@exceptions_not_just"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@exceptions_not_just"></a>Exceptions are not just for signaling bugs.
+They can be used to signal anticipated sources of failure, in such a way that the caller can catch them and respond to them.
+Exceptions that signal anticipated failures should be documented with a <code>@throws</code> clause, specifying the conditions under which that failure occurs.
+For example:</p>
+
+<pre id="@compute_integer_square_root_param_x_integer_value_take_square_root_returns_square_root_x_throws_notperfectsquareerror_if"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@compute_integer_square_root_param_x_integer_value_take_square_root_returns_square_root_x_throws_notperfectsquareerror_if"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * Compute the integer square root.
+ * @param x integer value to take square root of
+ * @returns square root of x
+ * @throws NotPerfectSquareError if x is not a perfect square
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">integerSquareRoot</span>(<span class="hljs-params">x: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span></span></code></pre>
+
+<p id="@here-s_new_version"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@here-s_new_version"></a>And here’s a new version of the <code>addAll</code> spec:</p>
+
+<pre id="@if_array1_array2_adds_elements_array2"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_array1_array2_adds_elements_array2"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * If the array1 !== array2, adds the elements of array2 to the end of array1.
+ * @returns true if array1 changed as a result
+ * @throws AliasingError if array1 === array2
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">addAll</span>(<span class="hljs-params">array1: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;, array2: <span class="hljs-built_in">Array</span>&lt;<span class="hljs-built_in">string</span>&gt;</span>): <span class="hljs-title">boolean</span></span></code></pre>
+
+<p id="@original_addall_above"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@original_addall_above"></a>In <a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#specifications_for_mutating_functions">the original <code>addAll</code> above</a>, the spec included <code>array1 !== array2</code> as a precondition: the behavior of the function was undefined if that requirement was violated.
+In this version of the spec, the precondition is removed, and instead we have a postcondition that defines the behavior both when the arrays are different objects (“adds the elements…” and the <code>@returns</code> clause) and when they are the same object (the <code>@throws</code> clause).</p>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-exceptions"><h4 class="text-danger" id="@reading_exercises_6"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_6"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-exceptions-throw_all_the_things" data-target="#ex-exceptions-throw_all_the_things" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-exceptions-throw_all_the_things"></a><span class="panel-title">Throw all the things!</span></div><div class="panel-collapse collapse exercise-panel" id="ex-exceptions-throw_all_the_things" data-outline="throw_all_the_things" data-ex-id="exceptions_for_anticipated_failures/throw_all_the_things" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@examine_code_analyzing"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@examine_code_analyzing"></a>Examine this code for analyzing some <code>Thing</code> objects:</p>
+
+<pre id="@const_allthethings_set-thing"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@const_allthethings_set-thing"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">const</span> allTheThings: Set&lt;Thing&gt; = <span class="hljs-keyword">new</span> Set();
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">analyzeEverything</span>(<span class="hljs-params"></span>): <span class="hljs-title">void</span> </span>{
+    analyzeThings();
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">analyzeThings</span>(<span class="hljs-params"></span>): <span class="hljs-title">void</span> </span>{
+    <span class="hljs-keyword">try</span> {
+        <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> t of allTheThings) {
+            analyzeOneThing(t);
+        }
+    } <span class="hljs-keyword">catch</span> (e) {
+        <span class="hljs-keyword">return</span>;
+    }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">analyzeOneThing</span>(<span class="hljs-params">t: Thing</span>) </span>{
+    <span class="hljs-comment">// ...</span>
+    <span class="hljs-comment">// ... maybe throw new AnalysisError()</span>
+    <span class="hljs-comment">// ...</span>
+}</code></pre>
+
+<label class="exercise-part-heading" id="@might_happen_if"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@might_happen_if"></a>What might happen if a client calls <code>analyzeEverything</code>, and then <code>analyzeOneThing</code> subsequently throws an <code>AnalysisError</code>?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="The program might stop abruptly, displaying the AnalysisError as the reason"><label for="md_converted_choice_27_0"><input type="checkbox" id="md_converted_choice_27_0">The program might stop abruptly, displaying the <code>AnalysisError</code> as the reason</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="The program might continue, without displaying any error"><label for="md_converted_choice_27_1"><input type="checkbox" id="md_converted_choice_27_1">The program might continue, without displaying any error</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="We might not call analyzeOneThing on all of the Thing objects in allTheThings"><label for="md_converted_choice_27_2"><input type="checkbox" id="md_converted_choice_27_2">We might not call <code>analyzeOneThing</code> on all of the <code>Thing</code> objects in <code>allTheThings</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="We might call analyzeOneThing multiple times on the same Thing object"><label for="md_converted_choice_27_3"><input type="checkbox" id="md_converted_choice_27_3">We might call <code>analyzeOneThing</code> multiple times on the same <code>Thing</code> object</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+</div></div><h2 id="special_results"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#special_results"></a>Special results</h2><div data-outline="special_results">
+
+<p id="@exceptions_best_way"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@exceptions_best_way"></a>Exceptions are the best way to communicate a problem that the caller is unlikely to be able to handle, for example because they provided an illegal input: either the caller or someone who called them has a bug.</p>
+
+<p id="@unusual_exceptional_results"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@unusual_exceptional_results"></a>For unusual or exceptional results that the caller <em>should</em> be prepared to handle, different programming languages take different approaches.
+In the Java language, for example, the implementer can declare exceptions that the caller is statically required to handle: if they don’t either catch the exception or add it to their own specification as a thrown exception, the compiler gives a static error.</p>
+
+<p id="@typescript_does_not_provide_static_checking"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@typescript_does_not_provide_static_checking"></a>TypeScript does not provide static checking for exception handling, so using exceptions for special-case results can be a source of bugs.
+For example, suppose we use <code>integerSquareRoot</code> with inputs taken from a file or entered by the user, and we neglect to <code>try ... catch</code> the <code>NotPerfect­Square­Error</code>.
+An invalid number will crash the program, when it would be better to produce a clear error message or prompt the user to try again.
+But TypeScript lacks the static checking of exceptions that would help us see and account for the problem ahead of time.</p>
+
+<p id="@good_alternative_make"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@good_alternative_make"></a>A good alternative is to make the return type of the function a <a href="https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#union-types">union type</a>, a type whose set of values is the union of the sets of values defined by two (or more) other types:</p>
+
+<pre id="@compute_integer_square_root_param_x_integer_value_take_square_root_returns_square_root_x_if_x_perfect"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@compute_integer_square_root_param_x_integer_value_take_square_root_returns_square_root_x_if_x_perfect"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * Compute the integer square root.
+ * @param x integer value to take square root of
+ * @returns square root of x if x is a perfect square, undefined otherwise
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">integerSquareRoot</span>(<span class="hljs-params">x: <span class="hljs-built_in">number</span></span>): <span class="hljs-title">number</span>|<span class="hljs-title">undefined</span></span></code></pre>
+
+<p id="@undefined_very_similar"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@undefined_very_similar"></a><code>undefined</code> is very similar to <code>null</code>: in JavaScript, declared but un-initialized variables have the value <code>undefined</code> instead of <code>null</code>.
+Without <a href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#avoid_null">strict null checking</a>, any variable can be <code>undefined</code> or <code>null</code>.
+With strict checking on, both are excluded.</p>
+
+<p id="@convention_null_used"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@convention_null_used"></a>By convention, <code>null</code> is used to mean “a value that is no value,” and it should be avoided at all times.
+In contrast, <code>undefined</code> is used to mean “no value here at all,” and as long as strict null checking is on, we can use it in a union type to signal a special case result.
+In our example, trying to use the updated <code>integerSquareRoot</code> without accounting for the possibility that it might return <code>undefined</code> is in many cases a static error:</p>
+
+<pre id="@let_twice_integersquareroot-input"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_twice_integersquareroot-input"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">let</span> twice = integerSquareRoot(input) * <span class="hljs-number">2</span>; <span class="hljs-comment">// static error</span>
+<span class="hljs-keyword">if</span> (integerSquareRoot(input) &gt; <span class="hljs-number">4</span>) { ... } <span class="hljs-comment">// static error</span></code></pre>
+
+<p id="@although_must_still"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@although_must_still"></a>… although we must still exercise care:</p>
+
+<pre id="@console-log-your_lucky_number"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@console-log-your_lucky_number"></a><code class="language-ts hljs typescript"><span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your lucky number is:'</span>, integerSquareRoot(<span class="hljs-number">5</span>)); <span class="hljs-comment">// no error</span></code></pre>
+
+<p id="@client_can_use"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@client_can_use"></a>As a client, how can we use <code>integerSquareRoot()</code> correctly?
+We need to check for the possibility of the special result.
+For example:</p>
+
+<pre id="@let_root_integersquareroot-input_type_root_number-undefined_if_root_undefined"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_root_integersquareroot-input_type_root_number-undefined_if_root_undefined"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">let</span> root = integerSquareRoot(input); <span class="hljs-comment">// type of `root` is `number|undefined`</span>
+<span class="hljs-keyword">if</span> (root === <span class="hljs-literal">undefined</span>) {
+    <span class="hljs-comment">// in this branch, TypeScript knows that `root` has type `undefined`</span>
+    ... 
+} <span class="hljs-keyword">else</span> {
+    <span class="hljs-comment">// in this branch, TypeScript knows that `root` has type `number`</span>
+    <span class="hljs-keyword">let</span> twice = root * <span class="hljs-number">2</span>; <span class="hljs-comment">// now legal</span>
+    ...
+}</code></pre>
+
+<p id="@if_special_result"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_special_result"></a>If the special result would indicate a bug, then one common simplification is to simply assert it:</p>
+
+<pre id="@let_root_integersquareroot-input_type_root_number-undefined_assert-root_undefined_if"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_root_integersquareroot-input_type_root_number-undefined_assert-root_undefined_if"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">let</span> root = integerSquareRoot(input); <span class="hljs-comment">// type of `root` is `number|undefined`</span>
+assert(root !== <span class="hljs-literal">undefined</span>);
+<span class="hljs-comment">// if we got past the assertion, TypeScript knows that `root` has type `number`</span>
+<span class="hljs-keyword">let</span> twice = root * <span class="hljs-number">2</span>; <span class="hljs-comment">// now legal</span></code></pre>
+
+<p id="@often_combined_using"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@often_combined_using"></a>This is often combined using the <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Nullish_coalescing">nullish coalescing operator</a>:</p>
+
+<pre id="@let_root_integersquareroot-input_assert-fail-root_undefined_root"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@let_root_integersquareroot-input_assert-fail-root_undefined_root"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">let</span> root = integerSquareRoot(input) ?? assert.fail(<span class="hljs-string">'root is undefined'</span>);
+<span class="hljs-comment">// `root` now simply has type `number`</span>
+<span class="hljs-keyword">let</span> twice = root * <span class="hljs-number">2</span>; <span class="hljs-comment">// now legal</span></code></pre>
+
+<h3 id="missing_map_keys"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#missing_map_keys"></a>Missing <code>Map</code> keys</h3><div data-outline="missing_map_keys">
+
+<p id="@if_you_python"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_you_python"></a>If you have a Python dictionary, what happens when you try to look up a key that is not in the dictionary?</p>
+
+<pre id="@zoo_tim_beaver"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@zoo_tim_beaver"></a><code class="language-python hljs">zoo = { <span class="hljs-string">'Tim'</span>: <span class="hljs-string">'beaver'</span> }
+zoo[<span class="hljs-string">'Tim'</span>]     <span class="hljs-comment"># =&gt; 'beaver'</span>
+zoo[<span class="hljs-string">'Bao Bao'</span>] <span class="hljs-comment"># =&gt; raises KeyError: 'Bao Bao'</span></code></pre>
+
+<p id="@python_considers_exception"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@python_considers_exception"></a>Python considers this an exception.
+TypeScript makes a different choice:</p>
+
+<pre id="@const_zoo_new"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@const_zoo_new"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">const</span> zoo = <span class="hljs-keyword">new</span> Map([[<span class="hljs-string">'Tim'</span>, <span class="hljs-string">'beaver'</span>]]);
+zoo.get(<span class="hljs-string">'Tim'</span>);     <span class="hljs-comment">// =&gt; 'beaver'</span>
+zoo.get(<span class="hljs-string">'Bao Bao'</span>); <span class="hljs-comment">// =&gt; undefined</span></code></pre>
+
+<p id="@python_postcondition_specifies"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@python_postcondition_specifies"></a>In Python, the postcondition specifies a <code>KeyError</code>.
+In TypeScript, for a <code>Map</code> with values of type <code>V</code>, the postcondition specifies a return type of <code>V|undefined</code>.</p>
+
+</div><h3 id="illegal_array_indices"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#illegal_array_indices"></a>Illegal array indices</h3><div data-outline="illegal_array_indices">
+
+<p id="@if_keep_our"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@if_keep_our"></a>What if we keep our zoo in an array instead of a map?</p>
+
+<pre id="@const_zoo_tim"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@const_zoo_tim"></a><code class="language-ts hljs typescript"><span class="hljs-keyword">const</span> zoo = [ <span class="hljs-string">'Tim'</span> ];
+<span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt;= <span class="hljs-number">1</span>; i++) {
+  <span class="hljs-keyword">let</span> name: <span class="hljs-built_in">string</span> = zoo[i];
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`Hello, <span class="hljs-subst">${name}</span>!`</span>);
+}
+<span class="hljs-comment">// =&gt; prints:</span>
+<span class="hljs-comment">//    Hello, Tim!</span>
+<span class="hljs-comment">//    Hello, undefined!</span></code></pre>
+
+<p id="@oh_no_compiler"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@oh_no_compiler"></a>Oh no.
+The compiler allows <code>zoo[i]</code> to be assigned to <code>name</code>, even though <code>name</code> must be a <code>string</code> and <code>zoo[i]</code> might not be!
+This is another hole in the static type system, and it requires another bit of TypeScript configuration: turning on <em>no unchecked index access</em> will change the return type of the <code>[..]</code> indexing operator and make it a union with <code>undefined</code>.
+So far in 6.102 that option has been off.
+We’ll be turning it on in future exercises and problem sets.
+Once we do, we’ll have to account for the possibility that the index might be illegal in code like this, or change the code to avoid using indices.</p>
+
+<p id="@you_can_edit"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@you_can_edit"></a>You can <a href="https://www.typescriptlang.org/play?noUncheckedIndexedAccess=true#code/MYewdgzgLgBAXiEMC8MDaMDkAVAlgW0xgF0BuAKADMQAnGACgBsBTWXFGABlJnYB5UARh64A1KICUMAN7kYMFrDABDfMwBcMaDVxgA5hwQg0uMnJihIIFgDpGIPfQAGACWaN7AGhgASaSrUAXwBCJwkKQPIgA">edit this example in the TypeScript Playground with <code>noUncheckedIndexedAccess</code> on</a>.</p>
+
+<p id="@note_example_doing"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@note_example_doing"></a>Note that this example is doing <em>out-of-bounds</em> indexing (beyond the end of the array).
+A different reason that an array index can return <code>undefined</code> is when the array is sparse, but <a href="https://web.mit.edu/6.102/www/sp25/tools/typescript/#array-sparsity">sparse arrays should be avoided</a>.</p>
+
+</div></div><h2 id="modules"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#modules"></a>Modules</h2><div data-outline="modules">
+
+<p id="@reading_focused_specifications"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_focused_specifications"></a>This reading has focused on specifications for functions.
+But TypeScript/JavaScript and Python (and many other languages) also support <em>modules</em>, which are an abstraction above the function level, allowing a group of related functions to be collected together.</p>
+
+<p id="@specific_use_term"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specific_use_term"></a>(This specific use of the term <em>module</em>, as a language feature, unfortunately collides with the more general computer-science term <em>module</em>, which we <a href="https://web.mit.edu/6.102/www/sp25/classes/02-testing/#test-first_programming">previously discussed</a>.  Python and TS/JS modules are indeed modules in the general CS sense, but so are other units of code like functions, classes, libraries, etc.)</p>
+
+<p id="@modern_typescript-javascript_each"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@modern_typescript-javascript_each"></a>In modern TypeScript/JavaScript, each file is a module.
+A module can <em>export</em> a particular set of functions (or constants, or user-defined types) by declaring them with the keyword <code>export</code>.
+A client of a module must <em>import</em> from the module, either specifying particular functions to import, or simply importing all the exported functions it wants to use.</p>
+
+<p id="@specification_module_combination"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specification_module_combination"></a>The specification of a module is the combination of its exported function specifications (or constants, or user-defined types).
+Functions and variables that are not exported are private to the module’s implementation of the module, much like local variables and internal helper functions are private to a function body.
+They are not part of the specification, because clients cannot access them or depend on them.</p>
+
+<p id="@python_modules_work"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@python_modules_work"></a>Python modules work similarly, except that Python has no explicit <code>export</code> declaration, and instead controls what is nominally exported from a module using naming conventions (functions and variables starting with <code>_</code> are considered internal to the implementation) and <a href="https://docs.python.org/3/tutorial/modules.html#importing-from-a-package"><code>__all__</code></a>.</p>
+
+</div><h2 id="summary"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#summary"></a>Summary</h2><div data-outline="summary">
+
+<p id="@before_wrap_up"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@before_wrap_up"></a>Before we wrap up, check your understanding with one last example:</p>
+
+<div class="reading-exercises exercises panel-group converted" id="ex-summary"><h4 class="text-danger" id="@reading_exercises_7"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@reading_exercises_7"></a>reading exercises</h4><div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-summary-scrabble_1" data-target="#ex-summary-scrabble_1" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-summary-scrabble_1"></a><span class="panel-title">Scrabble 1</span></div><div class="panel-collapse collapse exercise-panel" id="ex-summary-scrabble_1" data-outline="scrabble_1" data-ex-id="summary/scrabble_1" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<p id="@suppose_working_function"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@suppose_working_function"></a>Suppose we’re working on the function below…</p>
+
+<pre id="@param_tiles_string"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@param_tiles_string"></a><code class="language-ts hljs typescript"><span class="hljs-comment">/**
+ * @param tiles     a string of 7 uppercase letters.
+ * @param crossings contains only uppercase letters, without duplicates.
+ * @returns an array of words where each word can be made by taking
+ *         letters from tiles and at most 1 letter from crossings.
+ */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">scrabble</span>(<span class="hljs-params">tiles: <span class="hljs-built_in">string</span>, crossings: <span class="hljs-built_in">string</span></span>): <span class="hljs-title">Array</span>&lt;<span class="hljs-title">string</span>&gt; </span>{
+    <span class="hljs-keyword">if</span> (tiles.length !== <span class="hljs-number">7</span>) { <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">"tiles must have length 7"</span>); }
+    <span class="hljs-keyword">return</span> [ ];
+}</code></pre>
+
+<label class="exercise-part-heading" id="@which_parts_postcondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_parts_postcondition"></a>Which are parts of the <em>postcondition</em> of <code>scrabble</code>?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="tiles has only uppercase letters"><label for="md_converted_choice_28_0"><input type="checkbox" id="md_converted_choice_28_0"><code>tiles</code> has only uppercase letters</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="crossings has no duplicates"><label for="md_converted_choice_28_1"><input type="checkbox" id="md_converted_choice_28_1"><code>crossings</code> has no duplicates</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="scrabble takes two arguments"><label for="md_converted_choice_28_2"><input type="checkbox" id="md_converted_choice_28_2"><code>scrabble</code> takes two arguments</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="scrabble returns an array of strings"><label for="md_converted_choice_28_3"><input type="checkbox" id="md_converted_choice_28_3"><code>scrabble</code> returns an array of strings</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@which_parts_precondition"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_parts_precondition"></a>Which are parts of the <em>precondition</em> of <code>scrabble</code>?</label>
+
+<div class="form-group exercise-part" data-outline="b"><div class="checkbox exercise-choice" data-outline="tiles has length 7"><label for="md_converted_choice_29_0"><input type="checkbox" id="md_converted_choice_29_0"><code>tiles</code> has length 7</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="crossings is a string of uppercase letters"><label for="md_converted_choice_29_1"><input type="checkbox" id="md_converted_choice_29_1"><code>crossings</code> is a string of uppercase letters</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="scrabble’s arguments are of type string and string"><label for="md_converted_choice_29_2"><input type="checkbox" id="md_converted_choice_29_2"><code>scrabble</code>’s arguments are of type <code>string</code> and <code>string</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="scrabble returns an empty Array"><label for="md_converted_choice_29_3"><input type="checkbox" id="md_converted_choice_29_3"><code>scrabble</code> returns an empty <code>Array</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div>
+
+<div class="panel panel-danger"><div class="panel-heading" data-structure-tag="exercise" id="@ex-summary-scrabble_2" data-target="#ex-summary-scrabble_2" data-toggle="collapse"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ex-summary-scrabble_2"></a><span class="panel-title">Scrabble 2</span></div><div class="panel-collapse collapse exercise-panel" id="ex-summary-scrabble_2" data-outline="scrabble_2" data-ex-id="summary/scrabble_2" data-ex-category="reading-exercises" data-ex-remote="https://handx.mit.edu/v1/6.102/sp25/submit" data-ex-handout="classes-04-specifications"><div class="panel-body">
+
+<label class="exercise-part-heading" id="@which_parts_spec"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@which_parts_spec"></a>Which are <em>parts of the spec</em> that are <em>checked statically</em> by TypeScript?</label>
+
+<div class="form-group exercise-part" data-outline="a"><div class="checkbox exercise-choice" data-outline="tiles is a string of uppercase letters"><label for="md_converted_choice_30_0"><input type="checkbox" id="md_converted_choice_30_0"><code>tiles</code> is a string of uppercase letters</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="crossings has no duplicates"><label for="md_converted_choice_30_1"><input type="checkbox" id="md_converted_choice_30_1"><code>crossings</code> has no duplicates</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="when tiles.length !== 7, scrabble throws an Error"><label for="md_converted_choice_30_2"><input type="checkbox" id="md_converted_choice_30_2">when <code>tiles.length !== 7</code>, <code>scrabble</code> throws an <code>Error</code></label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="checkbox exercise-choice" data-outline="scrabble takes two arguments"><label for="md_converted_choice_30_3"><input type="checkbox" id="md_converted_choice_30_3"><code>scrabble</code> takes two arguments</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div>
+
+<label class="exercise-part-heading" id="@does_scrabble_implementation"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@does_scrabble_implementation"></a>Does the <code>scrabble</code> implementation satisfy its specification?</label>
+
+<div class="form-group exercise-part" data-outline="b"><div class="radio exercise-choice" data-outline="Yes"><label for="md_converted_choice_31_0"><input type="radio" id="md_converted_choice_31_0" name="md_converted_radio_31">Yes</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="No, because it throws an Error when tiles has invalid length"><label for="md_converted_choice_31_1"><input type="radio" id="md_converted_choice_31_1" name="md_converted_radio_31">No, because it throws an <code>Error</code> when <code>tiles</code> has invalid length</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+<div class="radio exercise-choice" data-outline="No, because it returns an empty result array even if we call it with tiles and crossings that can be combined to form valid words"><label for="md_converted_choice_31_2"><input type="radio" id="md_converted_choice_31_2" name="md_converted_radio_31">No, because it returns an empty result array even if we call it with tiles and crossings that can be combined to form valid words</label><span class="exercise-answer exercise-remote" style="display: none;">(missing answer)</span></div>
+</div>
+
+<div class="exercise-explain exercise-remote"><p>(missing explanation)</p></div><div class="form-inline"><div class="form-group"><button class="btn btn-default exercise-submit">check</button> <button class="btn btn-default exercise-reveal" style="display: none;">explain</button></div><div class="exercise-progress progress"><div class="progress-bar progress-bar-danger progress-bar-striped active"></div></div><div class="exercise-error"></div></div></div></div></div></div>
+
+<p id="@specification_acts_crucial"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@specification_acts_crucial"></a>A specification acts as a crucial firewall between the implementer of a module and its client.
+It makes separate development possible: the client is free to write code that uses the module without seeing its source code, and the implementer is free to write the code that implements the module without knowing how it will be used.</p>
+
+<p id="@review_specifications_help"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@review_specifications_help"></a>Let’s review how specifications help with the main goals of this course:</p>
+
+<ul>
+<li><p id="@safe_bugs_good"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@safe_bugs_good"></a><strong>Safe from bugs</strong>.
+A good specification clearly documents the mutual assumptions that a client and implementer rely on.
+Bugs often come from disagreements at the interfaces, and the presence of a specification helps avoid those disagreements.
+Using machine-checked language features in your spec, like static typing and exceptions rather than just a human-readable comment, can reduce bugs still more.</p></li>
+<li><p id="@easy_understand_short"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@easy_understand_short"></a><strong>Easy to understand</strong>.
+A short, simple spec is easier to understand than the implementation itself, and saves other people from having to read the code.</p></li>
+<li><p id="@ready_change_specs"><a class="jump" href="https://web.mit.edu/6.102/www/sp25/classes/04-specifications/#@ready_change_specs"></a><strong>Ready for change</strong>.
+Specs establish contracts between different parts of your code, allowing those parts to change independently as long as they continue to satisfy the requirements of the contract.</p></li>
+</ul></div></div>
+
+</div></main>
+<footer class="col-sm-2 footer-margin"><div>Collaboratively authored by Rob Miller and Max Goldman, with contributions from Saman Amarasinghe, Adam Chlipala, Srini Devadas, Gabriella Ecanow, Michael Ernst, John Guttag, Daniel Jackson, Josiah McMenamy, Martin Rinard, and Armando Solar-Lezama, and from Robert Durfee, Jenna Himawan, Stacia Johanna, Jessica Shi, Daniel Whatley, and Elizabeth Zhou. This work is licensed under <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">CC&nbsp;BY-SA&nbsp;4.0</a>.</div></footer>
+<script type="text/javascript" charset="utf-8" src="./Specifications_files/jquery.min.js.download"></script>
+
+
+<script type="text/javascript" charset="utf-8" src="./Specifications_files/bootstrap.min.js.download"></script><footer>MIT EECS</footer><footer class="footer-archived"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display: inline-block; vertical-align: text-bottom;"><path fill-rule="evenodd" d="M1.75 2.5a.25.25 0 00-.25.25v1.5c0 .138.112.25.25.25h12.5a.25.25 0 00.25-.25v-1.5a.25.25 0 00-.25-.25H1.75zM0 2.75C0 1.784.784 1 1.75 1h12.5c.966 0 1.75.784 1.75 1.75v1.5A1.75 1.75 0 0114.25 6H1.75A1.75 1.75 0 010 4.25v-1.5zM1.75 7a.75.75 0 01.75.75v5.5c0 .138.112.25.25.25h10.5a.25.25 0 00.25-.25v-5.5a.75.75 0 111.5 0v5.5A1.75 1.75 0 0113.25 15H2.75A1.75 1.75 0 011 13.25v-5.5A.75.75 0 011.75 7zm4.5 1a.75.75 0 000 1.5h3.5a.75.75 0 100-1.5h-3.5z"></path></svg>  spring 2025 course site archive  |  latest&nbsp;site&nbsp;at&nbsp;<a href="http://web.mit.edu/6.102/">mit.edu/6.102</a>  |  <a href="http://accessibility.mit.edu/">accessibility</a></footer><script type="text/javascript" charset="utf-8" src="./Specifications_files/handout-run.js.download" data-handx-url="https://handx.mit.edu/v1/6.102/sp25/" data-handx-id="classes-04-specifications"></script></body><!--
+Handout delivered Fri May 23 2025 13:30:03 GMT+0000 (Coordinated Universal Time)
+--><grammarly-desktop-integration data-grammarly-shadow-root="true"><template shadowrootmode="open"><style>
+      div.grammarly-desktop-integration {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+        -moz-user-select: none;
+        -webkit-user-select: none;
+        -ms-user-select:none;
+        user-select:none;
+      }
+
+      div.grammarly-desktop-integration:before {
+        content: attr(data-content);
+      }
+    </style><div aria-label="grammarly-integration" role="group" tabindex="-1" class="grammarly-desktop-integration" data-content="{&quot;mode&quot;:&quot;full&quot;,&quot;isActive&quot;:true,&quot;isUserDisabled&quot;:false}"></div></template></grammarly-desktop-integration></html>
