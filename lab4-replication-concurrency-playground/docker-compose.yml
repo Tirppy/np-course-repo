@@ -1,0 +1,85 @@
+services:
+  leader:
+    build: .
+    container_name: leader
+    ports:
+      - "8000:8000"
+    environment:
+      - FOLLOWER_HOSTS=follower1:8000,follower2:8000,follower3:8000,follower4:8000,follower5:8000
+      - WRITE_QUORUM=5
+      - MIN_DELAY=0
+      - MAX_DELAY=1000
+      - PORT=8000
+    command: python leader.py
+    networks:
+      - kv-network
+    depends_on:
+      - follower1
+      - follower2
+      - follower3
+      - follower4
+      - follower5
+
+  follower1:
+    build: .
+    container_name: follower1
+    ports:
+      - "8001:8000"
+    environment:
+      - FOLLOWER_ID=follower1
+      - PORT=8000
+    command: python follower.py
+    networks:
+      - kv-network
+
+  follower2:
+    build: .
+    container_name: follower2
+    ports:
+      - "8002:8000"
+    environment:
+      - FOLLOWER_ID=follower2
+      - PORT=8000
+    command: python follower.py
+    networks:
+      - kv-network
+
+  follower3:
+    build: .
+    container_name: follower3
+    ports:
+      - "8003:8000"
+    environment:
+      - FOLLOWER_ID=follower3
+      - PORT=8000
+    command: python follower.py
+    networks:
+      - kv-network
+
+  follower4:
+    build: .
+    container_name: follower4
+    ports:
+      - "8004:8000"
+    environment:
+      - FOLLOWER_ID=follower4
+      - PORT=8000
+    command: python follower.py
+    networks:
+      - kv-network
+
+  follower5:
+    build: .
+    container_name: follower5
+    ports:
+      - "8005:8000"
+    environment:
+      - FOLLOWER_ID=follower5
+      - PORT=8000
+    command: python follower.py
+    networks:
+      - kv-network
+
+networks:
+  kv-network:
+    driver: bridge
