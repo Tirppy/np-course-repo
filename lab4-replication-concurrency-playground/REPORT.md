@@ -33,8 +33,6 @@ The system consists of **6 Docker containers**:
   └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
 ```
 
-[IMAGE: Architecture diagram showing leader-follower topology with ports]
-
 ### 1.2 Technology Stack
 
 - **Language**: Python 3.11
@@ -266,21 +264,7 @@ python -m pytest test_integration.py -v
 
 ### 8.3 Test Results
 
-[IMAGE: Screenshot of pytest output showing all 9 tests passing]
-
-```
-test_integration.py::test_health_check PASSED
-test_integration.py::test_write_and_read PASSED
-test_integration.py::test_replication_to_followers PASSED
-test_integration.py::test_multiple_keys PASSED
-test_integration.py::test_concurrent_writes PASSED
-test_integration.py::test_write_quorum PASSED
-test_integration.py::test_last_write_wins PASSED
-test_integration.py::test_read_from_followers PASSED
-test_integration.py::test_data_consistency PASSED
-
-9 passed in 12.34s
-```
+![alt text](IMG\image.png)
 
 ---
 
@@ -295,12 +279,12 @@ test_integration.py::test_data_consistency PASSED
 
 ### 9.2 Write Quorum vs. Latency
 
-[IMAGE: Plot showing latency_vs_quorum.png - X-axis: Quorum (1-5), Y-axis: Latency (0-1.0s), 4 lines for Mean/Median/P95/P99]
+![alt text](IMG\image1.png)
 
 #### Results Table
 
-| Quorum | Mean | Median | P95 | P99 |
-|--------|------|--------|-----|-----|
+| Q | Mean   | Median | P95    | P99    |
+|---|--------|--------|--------|--------|
 | 1 | 0.188s | 0.160s | 0.505s | 0.598s |
 | 2 | 0.349s | 0.319s | 0.727s | 0.821s |
 | 3 | 0.490s | 0.507s | 0.794s | 0.871s |

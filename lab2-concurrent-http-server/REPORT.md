@@ -1,7 +1,5 @@
 # Lab 2 — Concurrent HTTP Server
 
-Date: 2025-10-22
-
 This report documents the Lab 2 requirements end-to-end using terminal-only tests on Windows. It covers: multithreading with simulated per-request work, a per-path hit counter (naive vs synchronized), and per-IP rate limiting (~5 req/s). Minimal comparisons with Lab 1 are included where relevant.
 
 Servers under test:

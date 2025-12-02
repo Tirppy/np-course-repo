@@ -84,7 +84,7 @@ B. Representation invariants and safety-from-rep-exposure (6 points)
 
 C. Specifications for every method (8 points)
 
-- In line with `References/Specifications.html` guidance, I added TypeDoc-style `@param`, `@returns`, `@throws` and explicit precondition/effects text to all public methods and the constructor of `Board`:
+- In line with the specifications guidance, I added TypeDoc-style `@param`, `@returns`, `@throws` and explicit precondition/effects text to all public methods and the constructor of `Board`:
   - `Board` constructor: rows, columns, initialCards preconditions and error on mismatch
   - `look(playerId)` — preconditions and return snapshot description
   - `flip(playerId,row,column)` — requires, effects, waiting semantics, throws on immediate failures
