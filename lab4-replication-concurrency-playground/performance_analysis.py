@@ -2,8 +2,8 @@
 Performance Analysis for the Key-Value Store with Single-Leader Replication.
 
 This script:
-1. Makes ~100 writes concurrently (10 at a time) on 10 keys
-2. Plots write quorum (1-5) vs average latency
+1. Makes ~100 writes (sequentially to properly measure quorum latency) on 10 keys
+2. Plots write quorum (1-5) vs latency metrics (mean, median, p95, p99)
 3. Checks if replica data matches leader data
 """
 
@@ -30,7 +30,6 @@ FOLLOWER_URLS = [
 # Test parameters
 NUM_KEYS = 10
 WRITES_PER_KEY = 10  # Total writes = 100
-CONCURRENT_WRITES = 10  # 10 concurrent writes at a time
 
 async def wait_for_services(timeout: int = 60):
     """Wait for all services to be healthy."""
@@ -90,6 +89,7 @@ async def write_single(client: httpx.AsyncClient, key: str, value: str) -> Tuple
 async def run_performance_test(write_quorum: int) -> List[float]:
     """
     Run performance test with a specific write quorum.
+    Runs writes SEQUENTIALLY to properly measure the effect of quorum on latency.
     Returns list of latencies for successful writes.
     """
     print(f"\n{'='*60}")
@@ -113,22 +113,19 @@ async def run_performance_test(write_quorum: int) -> List[float]:
     
     print(f"Total write operations: {len(write_operations)}")
     
-    # Execute writes in batches of CONCURRENT_WRITES
+    # Execute writes SEQUENTIALLY to properly measure individual latency
     async with httpx.AsyncClient() as client:
-        for i in range(0, len(write_operations), CONCURRENT_WRITES):
-            batch = write_operations[i:i + CONCURRENT_WRITES]
-            tasks = [write_single(client, key, value) for key, value in batch]
-            results = await asyncio.gather(*tasks)
+        for idx, (key, value) in enumerate(write_operations):
+            success, latency = await write_single(client, key, value)
+            if success:
+                successful_writes += 1
+                latencies.append(latency)
+            else:
+                failed_writes += 1
             
-            for success, latency in results:
-                if success:
-                    successful_writes += 1
-                    latencies.append(latency)
-                else:
-                    failed_writes += 1
-            
-            # Small delay between batches
-            await asyncio.sleep(0.1)
+            # Progress indicator every 20 writes
+            if (idx + 1) % 20 == 0:
+                print(f"  Progress: {idx + 1}/{len(write_operations)} writes completed")
     
     print(f"Successful writes: {successful_writes}")
     print(f"Failed writes: {failed_writes}")
@@ -226,33 +223,68 @@ def update_write_quorum(quorum: int):
 async def restart_leader():
     """Restart the leader container to apply new configuration."""
     print("Restarting leader container...")
-    subprocess.run(["docker-compose", "restart", "leader"], 
+    cwd = os.path.dirname(os.path.abspath(__file__)) or "."
+    # Use up -d --force-recreate to reload environment variables from docker-compose.yml
+    # docker-compose restart doesn't reload env vars, it just restarts the same container
+    subprocess.run(["docker-compose", "up", "-d", "--force-recreate", "leader"], 
                    capture_output=True, 
-                   cwd=os.path.dirname(os.path.abspath(__file__)) or ".")
+                   cwd=cwd)
     await asyncio.sleep(5)  # Wait for leader to restart
     await wait_for_services(timeout=30)
 
+def calculate_percentile(data: List[float], percentile: float) -> float:
+    """Calculate the given percentile of a list of values."""
+    sorted_data = sorted(data)
+    index = (percentile / 100) * (len(sorted_data) - 1)
+    lower = int(index)
+    upper = lower + 1
+    if upper >= len(sorted_data):
+        return sorted_data[-1]
+    weight = index - lower
+    return sorted_data[lower] * (1 - weight) + sorted_data[upper] * weight
+
 def plot_results(quorum_latencies: Dict[int, List[float]]):
     """
-    Plot write quorum vs average latency.
+    Plot write quorum vs latency metrics (mean, median, p95, p99).
+    X-axis: all 5 quorum values (1-5)
+    Y-axis: 0 to 1.0 seconds
+    Lines: mean, median, p95, p99
     """
     quorums = sorted(quorum_latencies.keys())
-    avg_latencies = [statistics.mean(quorum_latencies[q]) * 1000 for q in quorums]  # Convert to ms
-    std_latencies = [statistics.stdev(quorum_latencies[q]) * 1000 if len(quorum_latencies[q]) > 1 else 0 for q in quorums]
+    
+    # Calculate metrics for each quorum (in seconds)
+    means = [statistics.mean(quorum_latencies[q]) for q in quorums]
+    medians = [statistics.median(quorum_latencies[q]) for q in quorums]
+    p95s = [calculate_percentile(quorum_latencies[q], 95) for q in quorums]
+    p99s = [calculate_percentile(quorum_latencies[q], 99) for q in quorums]
     
     plt.figure(figsize=(10, 6))
-    plt.errorbar(quorums, avg_latencies, yerr=std_latencies, marker='o', capsize=5, 
-                 linewidth=2, markersize=8, color='blue', ecolor='lightblue')
-    plt.xlabel('Write Quorum', fontsize=12)
-    plt.ylabel('Average Write Latency (ms)', fontsize=12)
-    plt.title('Write Quorum vs Average Write Latency\n(Semi-Synchronous Replication)', fontsize=14)
-    plt.grid(True, alpha=0.3)
-    plt.xticks(quorums)
     
-    # Add annotation for each point
-    for q, lat in zip(quorums, avg_latencies):
-        plt.annotate(f'{lat:.1f}ms', (q, lat), textcoords="offset points", 
-                    xytext=(0, 10), ha='center', fontsize=9)
+    # Plot all 4 lines
+    plt.plot(quorums, means, marker='o', linewidth=2, markersize=8, 
+             color='blue', label='Mean')
+    plt.plot(quorums, medians, marker='s', linewidth=2, markersize=8, 
+             color='green', label='Median')
+    plt.plot(quorums, p95s, marker='^', linewidth=2, markersize=8, 
+             color='orange', label='P95')
+    plt.plot(quorums, p99s, marker='d', linewidth=2, markersize=8, 
+             color='red', label='P99')
+    
+    plt.xlabel('Write Quorum', fontsize=12)
+    plt.ylabel('Write Latency (seconds)', fontsize=12)
+    plt.title('Write Quorum vs Write Latency\n(Semi-Synchronous Replication)', fontsize=14)
+    plt.grid(True, alpha=0.3)
+    plt.xticks([1, 2, 3, 4, 5])
+    plt.ylim(0, 1.0)  # Y-axis from 0 to 1.0 seconds
+    plt.xlim(0.5, 5.5)  # X-axis with some padding
+    plt.legend(loc='upper left', fontsize=10)
+    
+    # Add value annotations for each point
+    for q_idx, q in enumerate(quorums):
+        plt.annotate(f'{means[q_idx]:.2f}s', (q, means[q_idx]), 
+                    textcoords="offset points", xytext=(5, 5), ha='left', fontsize=8, color='blue')
+        plt.annotate(f'{medians[q_idx]:.2f}s', (q, medians[q_idx]), 
+                    textcoords="offset points", xytext=(5, -10), ha='left', fontsize=8, color='green')
     
     plt.tight_layout()
     plt.savefig('latency_vs_quorum.png', dpi=150)
@@ -358,13 +390,8 @@ async def main():
     print("PERFORMANCE ANALYSIS: Key-Value Store with Leader Replication")
     print("="*60)
     
-    # Check if we should run the full test or quick test
-    quick_test = "--quick" in sys.argv
-    
-    if quick_test:
-        quorum_values = [1, 3, 5]  # Quick test with fewer quorum values
-    else:
-        quorum_values = [1, 2, 3, 4, 5]  # Full test
+    # Always test all 5 quorum values for complete graph
+    quorum_values = [1, 2, 3, 4, 5]
     
     try:
         # Wait for services to be ready
@@ -397,11 +424,15 @@ async def main():
         print("\n" + "="*60)
         print("SUMMARY STATISTICS")
         print("="*60)
+        print(f"{'Quorum':<8} {'Mean':<12} {'Median':<12} {'P95':<12} {'P99':<12} {'Count':<8}")
+        print("-" * 64)
         for quorum in sorted(quorum_latencies.keys()):
             latencies = quorum_latencies[quorum]
-            print(f"Quorum {quorum}: Avg={statistics.mean(latencies)*1000:.2f}ms, "
-                  f"Std={statistics.stdev(latencies)*1000:.2f}ms, "
-                  f"Count={len(latencies)}")
+            mean_val = statistics.mean(latencies)
+            median_val = statistics.median(latencies)
+            p95_val = calculate_percentile(latencies, 95)
+            p99_val = calculate_percentile(latencies, 99)
+            print(f"{quorum:<8} {mean_val:.3f}s{'':<6} {median_val:.3f}s{'':<6} {p95_val:.3f}s{'':<6} {p99_val:.3f}s{'':<6} {len(latencies):<8}")
         
     except Exception as e:
         print(f"Error during performance analysis: {e}")

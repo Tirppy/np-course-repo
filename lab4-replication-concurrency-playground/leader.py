@@ -7,7 +7,7 @@ import os
 import random
 import asyncio
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
 from fastapi import FastAPI, HTTPException
@@ -33,6 +33,22 @@ kv_store: Dict[str, tuple] = {}  # key -> (value, timestamp)
 # Lock for thread-safe operations
 store_lock = asyncio.Lock()
 
+# Shared HTTP client for replication (created on startup)
+http_client: Optional[httpx.AsyncClient] = None
+
+@app.on_event("startup")
+async def startup_event():
+    global http_client
+    # Create a persistent HTTP client with connection pooling
+    http_client = httpx.AsyncClient(timeout=10.0)
+    logger.info(f"Leader started with WRITE_QUORUM={WRITE_QUORUM}, delays=[{MIN_DELAY}, {MAX_DELAY}]ms")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    global http_client
+    if http_client:
+        await http_client.aclose()
+
 class WriteRequest(BaseModel):
     key: str
     value: str
@@ -54,80 +70,78 @@ class ReplicateRequest(BaseModel):
     value: str
     timestamp: float
 
-async def replicate_to_follower(client: httpx.AsyncClient, follower_host: str, key: str, value: str, timestamp: float) -> bool:
-    """
-    Replicate a write to a single follower with simulated network delay.
-    Returns True if replication was successful.
-    """
-    # Simulate network delay
-    delay = random.randint(MIN_DELAY, MAX_DELAY) / 1000.0  # Convert to seconds
-    await asyncio.sleep(delay)
-    
-    try:
-        response = await client.post(
-            f"http://{follower_host}/replicate",
-            json={"key": key, "value": value, "timestamp": timestamp},
-            timeout=10.0
-        )
-        if response.status_code == 200:
-            logger.info(f"Successfully replicated to {follower_host} (delay: {delay*1000:.0f}ms)")
-            return True
-        else:
-            logger.warning(f"Failed to replicate to {follower_host}: {response.status_code}")
-            return False
-    except Exception as e:
-        logger.error(f"Error replicating to {follower_host}: {e}")
-        return False
-
 async def replicate_to_followers(key: str, value: str, timestamp: float, quorum: int) -> int:
     """
     Replicate a write to all followers concurrently.
     Uses semi-synchronous replication - waits for quorum confirmations.
+    
+    The key insight: we simulate network delay, then the actual HTTP call is fast.
+    For proper quorum semantics, we wait for quorum tasks to fully complete
+    (delay + HTTP response), which simulates waiting for follower acknowledgment.
+    
     Returns the number of successful confirmations.
     """
-    async with httpx.AsyncClient() as client:
-        # Create tasks for all followers
-        tasks = [
-            replicate_to_follower(client, host, key, value, timestamp)
-            for host in FOLLOWER_HOSTS
-        ]
+    global http_client
+    
+    # Generate delays upfront for each follower
+    delays = [(host, random.randint(MIN_DELAY, MAX_DELAY) / 1000.0) for host in FOLLOWER_HOSTS]
+    
+    async def replicate_with_delay(host: str, delay: float) -> Tuple[bool, float]:
+        """Execute replication with pre-determined delay."""
+        # Simulate network latency
+        await asyncio.sleep(delay)
         
-        # For semi-synchronous replication, we wait for quorum confirmations
-        # but also allow remaining replications to complete asynchronously
-        confirmations = 0
-        completed_tasks = []
-        pending_tasks = set(asyncio.create_task(t) for t in tasks)
-        
-        # Wait for quorum or all tasks to complete
-        while pending_tasks and confirmations < quorum:
-            done, pending_tasks = await asyncio.wait(
-                pending_tasks,
-                return_when=asyncio.FIRST_COMPLETED
+        # Use shared HTTP client for faster requests
+        try:
+            response = await http_client.post(
+                f"http://{host}/replicate",
+                json={"key": key, "value": value, "timestamp": timestamp}
             )
-            for task in done:
+            success = response.status_code == 200
+            if success:
+                logger.info(f"Replicated to {host} (delay: {delay*1000:.0f}ms)")
+            else:
+                logger.warning(f"Failed to replicate to {host}: {response.status_code}")
+            return success, delay
+        except Exception as e:
+            logger.error(f"Error replicating to {host}: {e}")
+            return False, delay
+    
+    # Create tasks for all followers - they run truly concurrently
+    tasks = [
+        asyncio.create_task(replicate_with_delay(host, delay))
+        for host, delay in delays
+    ]
+    
+    # Wait for quorum confirmations using FIRST_COMPLETED
+    confirmations = 0
+    pending_tasks = set(tasks)
+    
+    while pending_tasks and confirmations < quorum:
+        done, pending_tasks = await asyncio.wait(
+            pending_tasks,
+            return_when=asyncio.FIRST_COMPLETED
+        )
+        for task in done:
+            try:
+                success, delay = task.result()
+                if success:
+                    confirmations += 1
+                    logger.info(f"Confirmation {confirmations}/{quorum} (delay: {delay*1000:.0f}ms)")
+            except Exception as e:
+                logger.error(f"Task failed: {e}")
+    
+    # Let remaining tasks complete in background
+    if pending_tasks:
+        async def complete_remaining():
+            for task in pending_tasks:
                 try:
-                    result = task.result()
-                    if result:
-                        confirmations += 1
-                except Exception as e:
-                    logger.error(f"Task failed: {e}")
-        
-        # Let remaining tasks complete in background (fire and forget for async part)
-        if pending_tasks:
-            async def complete_remaining():
-                nonlocal confirmations
-                for task in asyncio.as_completed(pending_tasks):
-                    try:
-                        result = await task
-                        if result:
-                            confirmations += 1
-                    except Exception:
-                        pass
-            
-            # Schedule remaining tasks but don't wait
-            asyncio.create_task(complete_remaining())
-        
-        return confirmations
+                    await task
+                except Exception:
+                    pass
+        asyncio.create_task(complete_remaining())
+    
+    return confirmations
 
 @app.post("/write", response_model=WriteResponse)
 async def write(request: WriteRequest):
